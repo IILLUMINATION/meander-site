@@ -126,7 +126,18 @@ export default function Home() {
     const platform = detectPlatform();
     setDetectedPlatform(platform);
     setCurrentPlatform(platform);
-    setIsDesktop(["macos", "linux", "windows"].includes(platform));
+    
+    // Показываем QR только на десктопных платформах И на широком экране
+    const isDesktopPlatform = ["macos", "linux", "windows"].includes(platform);
+    const isWideScreen = window.innerWidth >= 768;
+    setIsDesktop(isDesktopPlatform && isWideScreen);
+    
+    // Обновляем при изменении размера окна
+    const handleResize = () => {
+      setIsDesktop(isDesktopPlatform && window.innerWidth >= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const getDownloadLink = (platform: string) => {
@@ -166,8 +177,12 @@ export default function Home() {
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
         <nav className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-lg font-light tracking-widest text-accent">
-            MEANDER
+          <Link href="/" className="flex items-center gap-3">
+            <img
+              src="/images/лого свг без фона.svg"
+              alt="Meander"
+              className="h-8 w-auto"
+            />
           </Link>
           <div className="flex items-center gap-8">
             <ul className="flex gap-6 text-sm text-neutral-400 hidden md:flex">
@@ -187,6 +202,11 @@ export default function Home() {
                 </Link>
               </li>
               <li>
+                <Link href="/branding" className="hover:text-accent transition-colors">
+                  Брендинг
+                </Link>
+              </li>
+              <li>
                 <Link href="#roadmap" className="hover:text-accent transition-colors">
                   Roadmap
                 </Link>
@@ -203,7 +223,7 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex items-center justify-center px-6 pt-20">
+      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-12">
         <div className="text-center space-y-6 max-w-4xl">
           <h1 className="text-5xl md:text-7xl font-light tracking-wider">
             <span className="text-accent">Meander</span>
@@ -220,7 +240,7 @@ export default function Home() {
               href={getDownloadLink(currentPlatform)}
               className="px-8 py-4 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-lg"
             >
-              Скачать для {detectedPlatform ? platforms.find(p => p.type === detectedPlatform)?.name : "вашей платформы"}
+              Скачать
             </a>
             <Link
               href="#gallery"
@@ -229,11 +249,20 @@ export default function Home() {
               Смотреть демо
             </Link>
           </div>
-          {detectedPlatform && (
-            <p className="text-sm text-neutral-500 pt-4">
-              Определена платформа: {platforms.find(p => p.type === detectedPlatform)?.name}
-            </p>
-          )}
+        </div>
+        
+        {/* Мокапы телефонов */}
+        <div className="flex justify-center gap-8 mt-16">
+          <img
+            src="/images/мокап телефон с мокапом из гугл плей но именно телефон без фона.png"
+            alt="Meander на Android"
+            className="h-64 md:h-80 w-auto object-contain"
+          />
+          <img
+            src="/images/мокап телефон с мокапом из гугл плей но именно телефон без фона 2.png"
+            alt="Meander интерфейс"
+            className="h-64 md:h-80 w-auto object-contain"
+          />
         </div>
       </section>
 
@@ -286,7 +315,7 @@ export default function Home() {
           </div>
 
           {/* Main download button */}
-          <div className="flex flex-col items-center gap-6 mb-8">
+          <div className="flex flex-col items-center gap-12 mb-12">
             <a
               href={getDownloadLink(currentPlatform)}
               className="inline-block px-12 py-5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-lg"
@@ -296,8 +325,8 @@ export default function Home() {
 
             {/* QR Code для Google Play на десктопе */}
             {isDesktop && (
-              <div className="flex flex-col items-center p-6 bg-neutral-900 rounded-lg border border-neutral-800">
-                <div className="bg-white p-4 rounded">
+              <div className="flex flex-col items-center">
+                <div className="bg-white p-4 rounded-lg">
                   <QRCodeSVG
                     value={downloadLinks.android.googlePlay}
                     size={180}
@@ -305,8 +334,8 @@ export default function Home() {
                     includeMargin={false}
                   />
                 </div>
-                <p className="text-center text-neutral-400 text-sm mt-4">
-                  Отсканируйте для установки из Google Play
+                <p className="text-center text-neutral-500 text-sm mt-4">
+                  или скачайте на Android
                 </p>
               </div>
             )}
@@ -350,29 +379,48 @@ export default function Home() {
           <h2 className="text-2xl font-light tracking-widest mb-12 text-center">
             галерея / демо
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Placeholder для скриншотов */}
-            <div className="aspect-video bg-neutral-950 rounded-lg border border-neutral-900 flex items-center justify-center">
-              <div className="text-center text-neutral-500">
-                <div className="text-4xl mb-4">🖼️</div>
-                <p>Скриншот интерфейса</p>
-                <p className="text-sm mt-2">(заглушка)</p>
-              </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап программы из гугл плей красивый(не реальный скрин).jpg"
+                alt="Скриншот программы из Google Play"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg border border-neutral-900 flex items-center justify-center">
-              <div className="text-center text-neutral-500">
-                <div className="text-4xl mb-4">🖼️</div>
-                <p>Скриншот редактора</p>
-                <p className="text-sm mt-2">(заглушка)</p>
-              </div>
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 2.jpg"
+                alt="Скриншот интерфейса"
+                className="w-full h-full object-cover"
+              />
             </div>
-            {/* Placeholder для видео */}
-            <div className="md:col-span-2 aspect-video bg-neutral-950 rounded-lg border border-neutral-900 flex items-center justify-center">
-              <div className="text-center text-neutral-500">
-                <div className="text-4xl mb-4">🎬</div>
-                <p>Видео-демо</p>
-                <p className="text-sm mt-2">(заглушка)</p>
-              </div>
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 3.jpg"
+                alt="Скриншот редактора"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 4.jpg"
+                alt="Скриншот программы"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап новость о выходе новой версии.png"
+                alt="Новость о выходе новой версии"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
+              <img
+                src="/images/мокап о создании чата в simplex.png"
+                alt="Чат в Simplex"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
