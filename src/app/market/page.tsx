@@ -164,7 +164,7 @@ export default function MarketPage() {
       );
       // Перезагружаем все квесты для обновления счётчиков
       await loadQuests();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Vote error:", err);
       alert("Ошибка голосования: " + (err.response?.data?.error || err.message));
     }
