@@ -299,7 +299,7 @@ export default function QuestDetailPage() {
         { headers: getTokenHeaders() }
       );
       
-      const newReview = { rating: reviewRating, text_content: reviewText };
+      const newReview = { rating: reviewRating, text_content: reviewText, hasData: true };
       setUserReview(newReview);
       setReviewText("");
       setReviewRating(5);
