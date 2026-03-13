@@ -104,7 +104,7 @@ export default function QuestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [userVote, setUserVote] = useState<boolean | null>(null); // true = like, false = dislike
-  const [userReview, setUserReview] = useState<{ rating: number; text_content: string } | null>(null);
+  const [userReview, setUserReview] = useState<{ rating: number; text_content: string; hasData: boolean } | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -120,10 +120,10 @@ export default function QuestDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (questId) {
+    if (questId && user) {
       loadQuestData();
     }
-  }, [questId]);
+  }, [questId, user]);
 
   const getTokenHeaders = () => {
     const token = localStorage.getItem("meander_token");
@@ -143,33 +143,61 @@ export default function QuestDetailPage() {
       setQuest(questRes.data);
       setReviews(reviewsRes.data || []);
 
-      if (user) {
+      // Проверяем авторизацию через токен (не через user state)
+      const token = localStorage.getItem("meander_token");
+      if (token) {
         // Загружаем голос пользователя
         try {
           const voteRes = await axios.get(`${API_URL}/quests/${questId}/my-vote`, { headers: getTokenHeaders() });
+          console.log("Vote response:", voteRes.data);
           if (voteRes.data && voteRes.data.is_like !== undefined) {
             setUserVote(voteRes.data.is_like);
+          } else if (voteRes.data && Object.keys(voteRes.data).length === 0) {
+            // Пустой объект - нет голоса
+            setUserVote(null);
           }
-        } catch (e) {
-          console.log("No vote yet");
+        } catch (e: any) {
+          console.log("No vote yet:", e.response?.data || e.message);
+          setUserVote(null);
         }
 
         // Загружаем отзыв пользователя
         try {
           const reviewRes = await axios.get(`${API_URL}/quests/${questId}/my-review`, { headers: getTokenHeaders() });
-          if (reviewRes.data && (reviewRes.data.rating !== undefined || reviewRes.data.text_content)) {
+          console.log("Review response:", reviewRes.data);
+          
+          // Проверяем есть ли данные (rating ИЛИ text_content)
+          const hasRating = reviewRes.data && reviewRes.data.rating !== undefined && reviewRes.data.rating !== null && reviewRes.data.rating > 0;
+          const hasText = reviewRes.data && reviewRes.data.text_content && reviewRes.data.text_content.trim().length > 0;
+          
+          if (hasRating || hasText) {
             const reviewData = {
               rating: reviewRes.data.rating || 0,
               text_content: reviewRes.data.text_content || "",
+              hasData: hasRating || hasText,
             };
             setUserReview(reviewData);
-            if (reviewRes.data.text_content) {
+            if (hasText) {
               setReviewText(reviewRes.data.text_content);
               setReviewRating(reviewRes.data.rating || 5);
+            } else if (hasRating) {
+              // Только рейтинг без текста
+              setReviewRating(reviewRes.data.rating);
+              setIsEditingReview(true); // Предлагаем добавить текст
             }
+          } else {
+            // Отзыва нет вообще
+            setUserReview(null);
+            setReviewText("");
+            setReviewRating(5);
+            setIsEditingReview(false);
           }
-        } catch (e) {
-          console.log("No review yet");
+        } catch (e: any) {
+          console.log("No review yet:", e.response?.data || e.message);
+          setUserReview(null);
+          setReviewText("");
+          setReviewRating(5);
+          setIsEditingReview(false);
         }
       }
     } catch (err: any) {
@@ -494,7 +522,7 @@ export default function QuestDetailPage() {
             </h2>
 
             {/* User's Review - Display at top if exists */}
-            {user && userReview && userReview.text_content && !isEditingReview && (
+            {user && userReview && userReview.hasData && !isEditingReview && (
               <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 mb-8">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
@@ -532,9 +560,11 @@ export default function QuestDetailPage() {
                     <Edit2 className="w-4 h-4" />
                   </button>
                 </div>
-                <p className="text-neutral-300 leading-relaxed">
-                  {userReview.text_content}
-                </p>
+                {userReview.text_content && (
+                  <p className="text-neutral-300 leading-relaxed">
+                    {userReview.text_content}
+                  </p>
+                )}
               </div>
             )}
 
@@ -596,7 +626,7 @@ export default function QuestDetailPage() {
                   </button>
                 </div>
               </div>
-            ) : user && !userReview?.text_content ? (
+            ) : user && !userReview?.hasData ? (
               <div className="bg-neutral-900/30 rounded-lg p-6 mb-8">
                 <h3 className="text-lg font-medium mb-4">Оставить отзыв</h3>
 
@@ -635,7 +665,7 @@ export default function QuestDetailPage() {
                   {isSubmittingReview ? "Отправка..." : "Опубликовать отзыв"}
                 </button>
               </div>
-            ) : (
+            ) : !user ? (
               <div className="bg-neutral-900/30 rounded-lg p-6 mb-8 text-center">
                 <p className="text-neutral-400 mb-4">Войдите чтобы оставить отзыв</p>
                 <GoogleLogin
@@ -647,20 +677,18 @@ export default function QuestDetailPage() {
                   width={150}
                 />
               </div>
-            )}
+            ) : null}
 
             {/* Other Reviews List */}
             <div className="space-y-4">
-              {reviews.filter(r => r.author_id !== user?.id).length === 0 ? (
-                userReview?.text_content ? null : (
+              {reviews.length === 0 ? (
+                userReview?.hasData ? null : (
                   <div className="text-neutral-500 text-center py-8">
                     Отзывов пока нет
                   </div>
                 )
               ) : (
-                reviews
-                  .filter(r => r.author_id !== user?.id)
-                  .map((review) => (
+                reviews.map((review) => (
                     <div
                       key={review.id}
                       className="bg-neutral-900/30 rounded-lg p-6"
