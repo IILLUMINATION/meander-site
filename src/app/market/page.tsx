@@ -42,6 +42,7 @@ interface Quest {
   downloads_count: number;
   average_rating: number;
   is_demo: boolean;
+  is_featured?: boolean;
   created_at: string;
   updated_at: string;
 }
