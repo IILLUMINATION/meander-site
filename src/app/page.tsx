@@ -20,6 +20,8 @@ import {
   MessageSquare,
   Shield,
   Heart,
+  Menu,
+  X,
 } from "lucide-react";
 
 const features = [
@@ -105,6 +107,7 @@ export default function Home() {
   const [currentPlatform, setCurrentPlatform] = useState("android");
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const detectPlatform = () => {
@@ -184,8 +187,10 @@ export default function Home() {
               className="h-8 w-auto"
             />
           </Link>
-          <div className="flex items-center gap-8">
-            <ul className="flex gap-6 text-sm text-neutral-400 hidden md:flex">
+          
+          {/* Desktop Menu */}
+          <div className="hidden md:flex items-center gap-8">
+            <ul className="flex gap-6 text-sm text-neutral-400">
               <li>
                 <Link href="#features" className="hover:text-accent transition-colors">
                   Возможности
@@ -224,7 +229,72 @@ export default function Home() {
               Скачать
             </a>
           </div>
+
+          {/* Mobile Menu Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-neutral-400 hover:text-foreground transition-colors"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </nav>
+
+        {/* Mobile Menu Overlay */}
+        {mobileMenuOpen && (
+          <div className="md:hidden fixed inset-0 top-[73px] z-40 bg-background/95 backdrop-blur-xl border-t border-neutral-900">
+            <div className="flex flex-col items-center py-8 px-6 space-y-6">
+              <Link
+                href="#features"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Возможности
+              </Link>
+              <Link
+                href="#download"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Скачать
+              </Link>
+              <Link
+                href="/market"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Маркет
+              </Link>
+              <Link
+                href="#gallery"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Галерея
+              </Link>
+              <Link
+                href="/branding"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Брендинг
+              </Link>
+              <Link
+                href="#roadmap"
+                onClick={() => setMobileMenuOpen(false)}
+                className="text-lg text-neutral-300 hover:text-accent transition-colors"
+              >
+                Roadmap
+              </Link>
+              <a
+                href="#download"
+                onClick={() => setMobileMenuOpen(false)}
+                className="px-8 py-3 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors"
+              >
+                Скачать
+              </a>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Hero Section */}
