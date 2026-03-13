@@ -22,6 +22,7 @@ import {
   Send,
   Edit2,
   X,
+  QrCode,
 } from "lucide-react";
 
 const API_URL = "https://backend.meander.sbs";
@@ -109,6 +110,7 @@ export default function QuestDetailPage() {
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isEditingReview, setIsEditingReview] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -340,6 +342,14 @@ export default function QuestDetailPage() {
     alert("Функция жалобы будет добавлена позже");
   };
 
+  const handleOpenQR = () => {
+    setShowQRCode(true);
+  };
+
+  const handleCloseQR = () => {
+    setShowQRCode(false);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -411,9 +421,18 @@ export default function QuestDetailPage() {
                 {/* Author */}
                 <div className="flex items-center gap-3 mb-4">
                   <User className="w-5 h-5 text-neutral-500" />
-                  <span className="text-neutral-300">{quest.author_name || "Аноним"}</span>
-                  {quest.author_is_verified && (
-                    <CheckCircle className="w-4 h-4 text-accent" />
+                  {quest.author_id ? (
+                    <Link
+                      href={`/profile/${quest.author_id}`}
+                      className="text-neutral-300 hover:text-accent transition-colors flex items-center gap-2"
+                    >
+                      <span>{quest.author_name || "Аноним"}</span>
+                      {quest.author_is_verified && (
+                        <CheckCircle className="w-4 h-4 text-accent" />
+                      )}
+                    </Link>
+                  ) : (
+                    <span className="text-neutral-300">{quest.author_name || "Аноним"}</span>
                   )}
                 </div>
 
@@ -489,6 +508,13 @@ export default function QuestDetailPage() {
                 >
                   <Download className="w-5 h-5" />
                   Скачать {formatFileSize(quest.quest_size_bytes)}
+                </button>
+                <button
+                  onClick={handleOpenQR}
+                  className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
+                  title="QR-код для открытия в приложении"
+                >
+                  <QrCode className="w-5 h-5" />
                 </button>
                 <button
                   onClick={handleShare}
@@ -750,6 +776,42 @@ export default function QuestDetailPage() {
         </div>
       </main>
 
+      {/* QR Code Modal */}
+      {showQRCode && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={handleCloseQR}>
+          <div className="bg-neutral-900 rounded-lg p-8 max-w-sm mx-4 border border-neutral-800" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-medium">Открыть в приложении</h3>
+              <button
+                onClick={handleCloseQR}
+                className="p-2 text-neutral-400 hover:text-foreground transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="bg-white p-4 rounded-lg mb-6">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${API_URL}/share/quest/${questId}`)}`}
+                alt="QR Code"
+                className="w-full h-auto"
+              />
+            </div>
+            
+            <p className="text-neutral-400 text-sm text-center mb-4">
+              Отсканируйте QR-код чтобы открыть квест в приложении Meander
+            </p>
+            
+            <button
+              onClick={handleCloseQR}
+              className="w-full px-6 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-300"
+            >
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </div>
   );
@@ -786,17 +848,26 @@ function Header({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-3">
                 {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.full_name || ""}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
+                  <Link href={`/profile/${user.id}`}>
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name || ""}
+                      className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-accent transition-all"
+                    />
+                  </Link>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 font-bold">
-                    {getInitials(user.full_name)}
-                  </div>
+                  <Link href={`/profile/${user.id}`}>
+                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 font-bold hover:ring-2 hover:ring-accent transition-all">
+                      {getInitials(user.full_name)}
+                    </div>
+                  </Link>
                 )}
-                <span className="text-sm text-neutral-300">{user.full_name}</span>
+                <Link
+                  href={`/profile/${user.id}`}
+                  className="text-sm text-neutral-300 hover:text-accent transition-colors"
+                >
+                  {user.full_name}
+                </Link>
                 {user.is_verified && (
                   <CheckCircle className="w-4 h-4 text-accent" />
                 )}

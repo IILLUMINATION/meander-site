@@ -259,12 +259,12 @@ export default function Home() {
         {/* Мокапы телефонов */}
         <div className="flex justify-center gap-8 mt-16">
           <img
-            src="/images/мокап телефон с мокапом из гугл плей но именно телефон без фона.png"
+            src="/images/phone-mockup-1.png"
             alt="Meander на Android"
             className="h-64 md:h-80 w-auto object-contain"
           />
           <img
-            src="/images/мокап телефон с мокапом из гугл плей но именно телефон без фона 2.png"
+            src="/images/phone-mockup-2.png"
             alt="Meander интерфейс"
             className="h-64 md:h-80 w-auto object-contain"
           />

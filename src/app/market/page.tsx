@@ -162,9 +162,11 @@ export default function MarketPage() {
         { action: 'set', is_like: isLike },
         { headers: getTokenHeaders() }
       );
-      loadQuests();
+      // Перезагружаем все квесты для обновления счётчиков
+      await loadQuests();
     } catch (err) {
       console.error("Vote error:", err);
+      alert("Ошибка голосования: " + (err.response?.data?.error || err.message));
     }
   };
 
@@ -478,14 +480,16 @@ function QuestCard({
   onVote: (isLike: boolean) => void;
 }) {
   return (
-    <Link
-      href={`/market/${quest.id}`}
+    <div
       className={`bg-neutral-900/50 rounded-lg overflow-hidden border border-neutral-900 hover:border-accent/30 transition-colors ${
         compact ? "min-w-[160px] w-[160px]" : ""
       }`}
     >
       {/* Cover Image */}
-      <div className={`bg-neutral-950 ${compact ? "aspect-[3/4]" : "aspect-video"}`}>
+      <Link
+        href={`/market/${quest.id}`}
+        className={`block bg-neutral-950 ${compact ? "aspect-[3/4]" : "aspect-video"}`}
+      >
         {quest.preview_image_url ? (
           <img
             src={quest.preview_image_url}
@@ -497,20 +501,25 @@ function QuestCard({
             🎮
           </div>
         )}
-      </div>
+      </Link>
 
       {/* Content */}
       <div className={`p-4 ${compact ? "space-y-2" : "space-y-3"}`}>
-        <div className="flex items-start justify-between">
-          <h3 className={`font-medium line-clamp-1 ${compact ? "text-sm" : ""}`}>
-            {quest.title}
-          </h3>
-          {quest.is_demo && (
-            <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded">
-              Демо
-            </span>
-          )}
-        </div>
+        <Link
+          href={`/market/${quest.id}`}
+          className="block"
+        >
+          <div className="flex items-start justify-between">
+            <h3 className={`font-medium line-clamp-1 ${compact ? "text-sm" : ""}`}>
+              {quest.title}
+            </h3>
+            {quest.is_demo && (
+              <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded">
+                Демо
+              </span>
+            )}
+          </div>
+        </Link>
 
         {!compact && (
           <p className="text-neutral-400 text-sm line-clamp-2">
@@ -521,9 +530,21 @@ function QuestCard({
         {/* Author */}
         <div className="flex items-center gap-2 text-sm">
           <User className="w-3 h-3 text-neutral-500" />
-          <span className="text-neutral-400 truncate">
-            {quest.author_name || "Аноним"}
-          </span>
+          {quest.author_id ? (
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                window.location.href = `/profile/${quest.author_id}`;
+              }}
+              className="text-neutral-400 truncate hover:text-accent transition-colors cursor-pointer"
+            >
+              {quest.author_name || "Аноним"}
+            </span>
+          ) : (
+            <span className="text-neutral-400 truncate">
+              {quest.author_name || "Аноним"}
+            </span>
+          )}
           {quest.author_is_verified && (
             <CheckCircle className="w-3 h-3 text-accent flex-shrink-0" />
           )}
@@ -546,23 +567,20 @@ function QuestCard({
         </div>
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2" onClick={(e) => e.preventDefault()}>
+        <div className="flex gap-2 pt-2">
           <button
-            onClick={onDownload}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDownload();
+            }}
             className="flex-1 px-3 py-2 bg-accent hover:bg-accent-hover text-black text-xs font-medium rounded transition-colors flex items-center justify-center gap-1"
           >
             <Download className="w-3 h-3" />
             {!compact && "Скачать"}
           </button>
-          <button
-            onClick={() => onVote(true)}
-            className="px-3 py-2 bg-neutral-800 hover:bg-neutral-700 rounded transition-colors text-neutral-400 hover:text-accent"
-          >
-            <Heart className="w-4 h-4" />
-          </button>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
 
@@ -597,21 +615,30 @@ function Header({
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 {user.avatar_url ? (
-                  <img
-                    src={user.avatar_url}
-                    alt={user.full_name || ""}
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '';
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                  <Link href={`/profile/${user.id}`}>
+                    <img
+                      src={user.avatar_url}
+                      alt={user.full_name || ""}
+                      className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-accent transition-all"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '';
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </Link>
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500">
-                    <User className="w-4 h-4" />
-                  </div>
+                  <Link href={`/profile/${user.id}`}>
+                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 hover:ring-2 hover:ring-accent transition-all">
+                      <User className="w-4 h-4" />
+                    </div>
+                  </Link>
                 )}
-                <span className="text-sm text-neutral-300">{user.full_name}</span>
+                <Link
+                  href={`/profile/${user.id}`}
+                  className="text-sm text-neutral-300 hover:text-accent transition-colors"
+                >
+                  {user.full_name}
+                </Link>
                 {user.is_verified && (
                   <CheckCircle className="w-4 h-4 text-accent" />
                 )}
