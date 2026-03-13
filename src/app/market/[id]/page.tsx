@@ -752,7 +752,7 @@ export default function QuestDetailPage() {
                                   <Star
                                     key={star}
                                     className={`w-4 h-4 ${
-                                      star <= review.rating
+                                      review.rating && star <= review.rating
                                         ? "fill-accent text-accent"
                                         : "text-neutral-600"
                                     }`}
