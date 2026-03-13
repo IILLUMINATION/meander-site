@@ -197,6 +197,11 @@ export default function Home() {
                 </Link>
               </li>
               <li>
+                <Link href="/market" className="hover:text-accent transition-colors">
+                  Маркет
+                </Link>
+              </li>
+              <li>
                 <Link href="#gallery" className="hover:text-accent transition-colors">
                   Галерея
                 </Link>
