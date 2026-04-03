@@ -3,6 +3,8 @@
 import { useState, useEffect, use } from "react";
 import Link from "next/link";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
+import ScrollToTop from "../../../components/ScrollToTop";
+import { getPrevArticle, getNextArticle, getArticleBySlug, DocArticle } from "../../../lib/docs-registry";
 import {
   Menu,
   X,
@@ -298,15 +300,59 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
         <main className="flex-1 py-8 md:py-12 px-4 md:px-8 lg:px-12 max-w-4xl">
           <MarkdownRenderer content={content} />
 
-          {/* Back to docs */}
+          {/* Pagination */}
           <div className="mt-12 md:mt-16 pt-8 border-t border-neutral-900">
-            <Link
-              href="/docs"
-              className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-accent transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Вернуться к документации
-            </Link>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {(() => {
+                const prev = getPrevArticle(slug);
+                const next = getNextArticle(slug);
+                return (
+                  <>
+                    {prev ? (
+                      <Link
+                        href={`/docs/${prev.slug}`}
+                        className="group p-4 bg-neutral-900/30 hover:bg-neutral-900/60 border border-neutral-800/50 hover:border-neutral-700 rounded-xl transition-all"
+                      >
+                        <div className="flex items-center gap-2 text-xs text-neutral-600 mb-1">
+                          <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
+                          Предыдущая
+                        </div>
+                        <p className="text-sm font-medium text-neutral-300 group-hover:text-accent transition-colors truncate">
+                          {prev.title}
+                        </p>
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/docs"
+                        className="group p-4 bg-neutral-900/30 hover:bg-neutral-900/60 border border-neutral-800/50 hover:border-neutral-700 rounded-xl transition-all"
+                      >
+                        <div className="flex items-center gap-2 text-xs text-neutral-600 mb-1">
+                          <ArrowLeft className="w-3 h-3 group-hover:-translate-x-0.5 transition-transform" />
+                          Документация
+                        </div>
+                        <p className="text-sm font-medium text-neutral-300 group-hover:text-accent transition-colors">
+                          Все статьи
+                        </p>
+                      </Link>
+                    )}
+                    {next && (
+                      <Link
+                        href={`/docs/${next.slug}`}
+                        className="group p-4 bg-neutral-900/30 hover:bg-neutral-900/60 border border-neutral-800/50 hover:border-neutral-700 rounded-xl transition-all md:text-right"
+                      >
+                        <div className="flex items-center gap-2 text-xs text-neutral-600 mb-1 md:justify-end">
+                          Следующая
+                          <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                        </div>
+                        <p className="text-sm font-medium text-neutral-300 group-hover:text-accent transition-colors truncate">
+                          {next.title}
+                        </p>
+                      </Link>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
           </div>
         </main>
       </div>
@@ -317,6 +363,8 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
           <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
         </div>
       </footer>
+
+      <ScrollToTop />
     </div>
   );
 }

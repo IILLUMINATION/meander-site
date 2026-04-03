@@ -22,7 +22,10 @@ import {
   Check,
   ExternalLink,
   ArrowLeft,
+  Search,
 } from "lucide-react";
+import ScrollToTop from "../../components/ScrollToTop";
+import { docArticles, getArticlesByCategory, searchArticles, DocArticle } from "../../lib/docs-registry";
 
 const docSections = [
   {
@@ -99,14 +102,10 @@ const codeExample = `// Пример узла квеста
 
 export default function DocsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("getting-started");
-  const [copied, setCopied] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(codeExample);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const categories = getArticlesByCategory();
+  const searchResults = searchQuery.length > 0 ? searchArticles(searchQuery) : [];
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,325 +192,148 @@ export default function DocsPage() {
       </section>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row">
-        {/* Sidebar */}
-        <aside className="hidden md:block w-64 flex-shrink-0 sticky top-[73px] h-[calc(100vh-73px)] overflow-y-auto border-r border-neutral-900">
-          <div className="py-6 px-4">
-            {docSections.map((section) => (
-              <div key={section.id} className="mb-6">
-                <button
-                  onClick={() => setActiveSection(activeSection === section.id ? "" : section.id)}
-                  className="flex items-center gap-2 text-sm font-medium text-foreground mb-2 hover:text-accent transition-colors w-full text-left"
-                >
-                  <section.icon className="w-4 h-4 text-accent" strokeWidth={1.5} />
-                  <span>{section.title}</span>
-                  <ChevronRight
-                    className={`w-3 h-3 ml-auto text-neutral-600 transition-transform ${
-                      activeSection === section.id ? "rotate-90" : ""
-                    }`}
-                  />
-                </button>
-                {activeSection === section.id && (
-                  <ul className="ml-6 space-y-1">
-                    {section.items.map((item) => (
-                      <li key={item.id}>
-                        <a
-                          href={`#${item.id}`}
-                          className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors py-1 block"
-                        >
-                          {item.title}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
+      <div className="max-w-4xl mx-auto">
+        {/* Content */}
+        <main className="py-8 md:py-12 px-4 md:px-6">
+          {/* Search */}
+          <div className="relative mb-8 md:mb-12">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-600" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Поиск по документации..."
+              className="w-full pl-10 pr-4 py-3 bg-neutral-900/50 border border-neutral-800 rounded-xl text-sm text-neutral-300 placeholder-neutral-600 focus:outline-none focus:border-accent/40 transition-colors"
+            />
           </div>
-        </aside>
 
-        {/* Mobile Sidebar */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 top-[73px] z-40 bg-background/95 backdrop-blur-xl">
-            <div className="py-6 px-4 h-full overflow-y-auto">
-              {docSections.map((section) => (
-                <div key={section.id} className="mb-6">
-                  <button
-                    onClick={() => setActiveSection(activeSection === section.id ? "" : section.id)}
-                    className="flex items-center gap-2 text-sm font-medium text-foreground mb-2 hover:text-accent transition-colors w-full text-left"
-                  >
-                    <section.icon className="w-4 h-4 text-accent" strokeWidth={1.5} />
-                    <span>{section.title}</span>
-                    <ChevronRight
-                      className={`w-3 h-3 ml-auto text-neutral-600 transition-transform ${
-                        activeSection === section.id ? "rotate-90" : ""
-                      }`}
-                    />
-                  </button>
-                  {activeSection === section.id && (
-                    <ul className="ml-6 space-y-1">
-                      {section.items.map((item) => (
-                        <li key={item.id}>
-                          <a
-                            href={`#${item.id}`}
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="text-sm text-neutral-500 hover:text-neutral-300 transition-colors py-1 block"
-                          >
-                            {item.title}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+          {/* Search Results */}
+          {searchQuery.length > 0 && (
+            <div className="mb-8">
+              <h3 className="text-sm text-neutral-500 mb-3">
+                {searchResults.length > 0
+                  ? `Найдено: ${searchResults.length}`
+                  : "Ничего не найдено"}
+              </h3>
+              {searchResults.length > 0 ? (
+                <div className="space-y-2">
+                  {searchResults.map((article) => (
+                    <ArticleCard key={article.slug} article={article} />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-neutral-600 text-sm">
+                    Попробуйте изменить запрос
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Articles Catalog */}
+          {searchQuery.length === 0 && (
+            <>
+              {/* Featured Article */}
+              {docArticles.length > 0 && (
+                <div className="mb-10">
+                  <ArticleCard article={docArticles[0]} featured />
+                </div>
+              )}
+
+              {/* Categories */}
+              {Array.from(categories.entries()).map(([category, articles]) => (
+                <div key={category} className="mb-8">
+                  <h3 className="text-sm font-medium text-neutral-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    {category}
+                  </h3>
+                  <div className="space-y-2">
+                    {articles.map((article) => (
+                      <ArticleCard key={article.slug} article={article} />
+                    ))}
+                  </div>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
 
-        {/* Content */}
-        <main className="flex-1 py-8 md:py-12 px-4 md:px-12">
-          {/* Test Article Banner */}
-          <Link
-            href="/docs/test-article"
-            className="block mb-12 p-5 md:p-6 bg-accent/5 hover:bg-accent/10 rounded-xl border border-accent/20 hover:border-accent/40 transition-all group"
-          >
-            <div className="flex items-start gap-4">
-              <div className="p-2.5 bg-accent/10 rounded-lg">
-                <BookOpen className="w-5 h-5 text-accent" strokeWidth={1.5} />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs text-accent uppercase tracking-wider font-medium">Тест</span>
-                  <span className="text-xs text-neutral-600">~5 мин чтения</span>
-                </div>
-                <h3 className="text-base md:text-lg font-medium text-foreground group-hover:text-accent transition-colors mb-1">
-                  Создание первого квеста
-                </h3>
-                <p className="text-neutral-500 text-sm">
-                  Полное руководство с картинками, видео, кодом и таблицами — демо всех возможностей рендерера
+              {/* Coming Soon */}
+              <div className="mt-12 p-6 border border-neutral-800 border-dashed rounded-xl text-center">
+                <p className="text-neutral-600 text-sm">
+                  Новые статьи скоро появятся
+                </p>
+                <p className="text-neutral-700 text-xs mt-1">
+                  Есть вопрос? Напишите нам в{" "}
+                  <a
+                    href="https://t.me/meanderRU"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-neutral-500 hover:text-accent transition-colors"
+                  >
+                    Telegram
+                  </a>
                 </p>
               </div>
-              <ChevronRight className="w-5 h-5 text-neutral-600 group-hover:text-accent group-hover:translate-x-1 transition-all mt-2" />
-            </div>
-          </Link>
-
-          {/* Quick Start Card */}
-          <div className="mb-12 p-6 md:p-8 bg-neutral-900/50 rounded-xl border border-neutral-800">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="p-3 bg-accent/10 rounded-lg">
-                <Rocket className="w-6 h-6 text-accent" strokeWidth={1.5} />
-              </div>
-              <div>
-                <h2 className="text-xl md:text-2xl font-light mb-2">Быстрый старт</h2>
-                <p className="text-neutral-400 text-sm md:text-base">
-                  Создайте свой первый квест за 5 минут
-                </p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-medium">
-                  1
-                </span>
-                <div>
-                  <p className="text-sm text-neutral-300 font-medium">Создайте новый проект</p>
-                  <p className="text-sm text-neutral-500">Откройте Meander и нажмите «Новый квест»</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-medium">
-                  2
-                </span>
-                <div>
-                  <p className="text-sm text-neutral-300 font-medium">Добавьте первый узел</p>
-                  <p className="text-sm text-neutral-500">Напишите текст и добавьте изображение</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-medium">
-                  3
-                </span>
-                <div>
-                  <p className="text-sm text-neutral-300 font-medium">Создайте ветвление</p>
-                  <p className="text-sm text-neutral-500">Добавьте варианты выбора и связи между узлами</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-accent/20 text-accent text-xs flex items-center justify-center font-medium">
-                  4
-                </span>
-                <div>
-                  <p className="text-sm text-neutral-300 font-medium">Опубликуйте на маркете</p>
-                  <p className="text-sm text-neutral-500">Поделитесь квестом с сообществом</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Code Example */}
-          <div className="mb-12">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl md:text-2xl font-light">Формат квеста</h2>
-              <button
-                onClick={handleCopy}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs text-neutral-400 hover:text-foreground bg-neutral-900 hover:bg-neutral-800 rounded-lg transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? "Скопировано" : "Копировать"}
-              </button>
-            </div>
-            <div className="relative bg-neutral-950 rounded-xl border border-neutral-800 overflow-hidden">
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-neutral-800">
-                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                <div className="w-3 h-3 rounded-full bg-green-500/60" />
-                <span className="ml-2 text-xs text-neutral-600">quest.mnd</span>
-              </div>
-              <pre className="p-4 md:p-6 text-sm text-neutral-300 overflow-x-auto">
-                <code>{codeExample}</code>
-              </pre>
-            </div>
-          </div>
-
-          {/* Feature Cards */}
-          <div className="grid md:grid-cols-2 gap-4 md:gap-6 mb-12">
-            <div className="p-6 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-neutral-700 transition-colors">
-              <GitBranch className="w-8 h-8 text-accent mb-4" strokeWidth={1.5} />
-              <h3 className="text-lg font-medium mb-2">Ветвящиеся сюжеты</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed">
-                Создавайте сложные нелинейные истории с условиями, переменными и множественными концовками.
-                Визуальный редактор делает процесс интуитивным.
-              </p>
-              <a href="#conditions" className="inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover mt-4 transition-colors">
-                Подробнее <ChevronRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-            <div className="p-6 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-neutral-700 transition-colors">
-              <Image className="w-8 h-8 text-accent mb-4" strokeWidth={1.5} />
-              <h3 className="text-lg font-medium mb-2">Мультимедиа</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed">
-                Добавляйте фоны, спрайты персонажей, фоновую музыку и звуковые эффекты.
-                Поддержка кастомных шрифтов для уникальной атмосферы.
-              </p>
-              <a href="#images" className="inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover mt-4 transition-colors">
-                Подробнее <ChevronRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-            <div className="p-6 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-neutral-700 transition-colors">
-              <Save className="w-8 h-8 text-accent mb-4" strokeWidth={1.5} />
-              <h3 className="text-lg font-medium mb-2">Сохранения</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed">
-                Автосохранение при каждом действии. Несколько слотов сохранений для разных прохождений.
-                Экспорт сохранений в файл.
-              </p>
-              <a href="#export" className="inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover mt-4 transition-colors">
-                Подробнее <ChevronRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-            <div className="p-6 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-neutral-700 transition-colors">
-              <Upload className="w-8 h-8 text-accent mb-4" strokeWidth={1.5} />
-              <h3 className="text-lg font-medium mb-2">Маркет</h3>
-              <p className="text-neutral-400 text-sm leading-relaxed">
-                Публикуйте квесты, получайте отзывы, набирайте подписчиков.
-                Встроенный рейтинг и система рекомендаций.
-              </p>
-              <a href="#publish" className="inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover mt-4 transition-colors">
-                Подробнее <ChevronRight className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-
-          {/* File Format Section */}
-          <div className="mb-12">
-            <h2 className="text-xl md:text-2xl font-light mb-6">Формат файла .mnd</h2>
-            <div className="space-y-4 text-neutral-400 text-sm leading-relaxed">
-              <p>
-                Файлы квестов Meander используют формат <code className="px-1.5 py-0.5 bg-neutral-900 rounded text-accent text-xs">.mnd</code> — 
-                это обычный JSON с дополнительной структурой. Вы можете редактировать его вручную в любом текстовом редакторе.
-              </p>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <FileText className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Текст</p>
-                  <p className="text-xs text-neutral-600 mt-1">Диалоги и описания</p>
-                </div>
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <Image className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Изображения</p>
-                  <p className="text-xs text-neutral-600 mt-1">Фоны и спрайты</p>
-                </div>
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <Music className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Аудио</p>
-                  <p className="text-xs text-neutral-600 mt-1">Музыка и звуки</p>
-                </div>
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <GitBranch className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Логика</p>
-                  <p className="text-xs text-neutral-600 mt-1">Условия и переменные</p>
-                </div>
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <Download className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Экспорт</p>
-                  <p className="text-xs text-neutral-600 mt-1">Импорт/экспорт</p>
-                </div>
-                <div className="p-3 bg-neutral-900/50 rounded-lg">
-                  <Settings className="w-4 h-4 text-accent mb-2" strokeWidth={1.5} />
-                  <p className="text-xs text-neutral-300 font-medium">Настройки</p>
-                  <p className="text-xs text-neutral-600 mt-1">Тема и шрифты</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <div className="p-6 md:p-8 bg-neutral-900/30 rounded-xl border border-neutral-800 text-center">
-            <h3 className="text-lg md:text-xl font-light mb-3">Не нашли что искали?</h3>
-            <p className="text-neutral-400 text-sm mb-6">
-              Задайте вопрос в сообществе или напишите нам напрямую
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href="https://t.me/meanderRU"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-sm"
-              >
-                Telegram канал
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-              <a
-                href="https://t.me/mndForum"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-neutral-700 hover:border-neutral-500 transition-colors rounded-lg text-sm"
-              >
-                Форум
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-
-          {/* Back to home */}
-          <div className="mt-12 pt-8 border-t border-neutral-900">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 text-sm text-neutral-500 hover:text-accent transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Вернуться на главную
-            </Link>
-          </div>
+            </>
+          )}
         </main>
       </div>
 
       {/* Footer */}
       <footer className="py-6 md:py-8 px-4 md:px-6 border-t border-neutral-900">
-        <div className="max-w-7xl mx-auto text-center text-neutral-600 text-sm">
+        <div className="max-w-4xl mx-auto text-center text-neutral-600 text-sm">
           <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
         </div>
       </footer>
+
+      <ScrollToTop />
     </div>
+  );
+}
+
+// Article Card Component
+function ArticleCard({ article, featured = false }: { article: DocArticle; featured?: boolean }) {
+  return (
+    <Link
+      href={`/docs/${article.slug}`}
+      className={`block group rounded-xl transition-all ${
+        featured
+          ? "p-5 md:p-6 bg-accent/5 hover:bg-accent/10 border border-accent/20 hover:border-accent/40"
+          : "p-4 bg-neutral-900/30 hover:bg-neutral-900/60 border border-neutral-800/50 hover:border-neutral-700"
+      }`}
+    >
+      <div className="flex items-start gap-3 md:gap-4">
+        <div className={`flex-shrink-0 rounded-lg ${
+          featured ? "p-2.5 bg-accent/10" : "p-2 bg-neutral-800/50"
+        }`}>
+          <BookOpen className={`w-4 h-4 md:w-5 md:h-5 ${featured ? "text-accent" : "text-neutral-500"}`} strokeWidth={1.5} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className={`font-medium mb-1 group-hover:text-accent transition-colors truncate ${
+            featured ? "text-base md:text-lg" : "text-sm"
+          }`}>
+            {article.title}
+          </h3>
+          <p className={`leading-relaxed ${
+            featured
+              ? "text-neutral-500 text-sm md:text-base line-clamp-2"
+              : "text-neutral-600 text-xs md:text-sm line-clamp-1"
+          }`}>
+            {article.description}
+          </p>
+          {!featured && (
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {article.tags.slice(0, 3).map((tag) => (
+                <span key={tag} className="px-2 py-0.5 bg-neutral-800/50 rounded text-[10px] text-neutral-600">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+        <ChevronRight className={`w-4 h-4 md:w-5 md:h-5 flex-shrink-0 mt-1 text-neutral-700 group-hover:text-accent group-hover:translate-x-0.5 transition-all ${
+          featured ? "" : ""
+        }`} />
+      </div>
+    </Link>
   );
 }
