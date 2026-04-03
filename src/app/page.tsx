@@ -217,6 +217,11 @@ export default function Home() {
                 </Link>
               </li>
               <li>
+                <Link href="/docs" className="hover:text-accent transition-colors">
+                  Документация
+                </Link>
+              </li>
+              <li>
                 <Link href="#roadmap" className="hover:text-accent transition-colors">
                   Roadmap
                 </Link>
@@ -280,6 +285,13 @@ export default function Home() {
               className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
             >
               Брендинг
+            </Link>
+            <Link
+              href="/docs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Документация
             </Link>
             <Link
               href="#roadmap"
