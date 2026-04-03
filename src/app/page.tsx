@@ -686,7 +686,7 @@ export default function Home() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Star className="w-2.5 h-2.5" />
-                        {quest.average_rating > 0 ? quest.average_rating.toFixed(1) : "—"}
+                        {quest.average_rating > 0 ? Number(quest.average_rating).toFixed(1) : "—"}
                       </span>
                     </div>
                     {quest.estimated_playtime > 0 && (
