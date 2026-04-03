@@ -14,6 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://meander.ru"),
   title: "Meander | Текстовые квесты",
   description: "Meander - бесплатная программа для создания и прохождения текстовых квестов. Визуальный редактор скриптов, ветвящиеся сюжеты, поддержка изображений и аудио.",
   keywords: ["текстовые квесты", "создание игр", "визуальная новелла", "редактор скриптов", "Meander"],
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Meander - Текстовые квесты",
+        alt: "Meander",
       },
     ],
   },

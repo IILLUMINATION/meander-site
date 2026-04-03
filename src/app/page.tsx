@@ -179,12 +179,12 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
-        <nav className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <nav className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3">
             <img
               src="/images/лого свг без фона.svg"
               alt="Meander"
-              className="h-8 w-auto"
+              className="h-7 md:h-8 w-auto"
             />
           </Link>
           
@@ -239,122 +239,124 @@ export default function Home() {
           </button>
         </nav>
 
-        {/* Mobile Menu Overlay */}
-        {mobileMenuOpen && (
-          <div className="md:hidden fixed inset-0 top-[73px] z-40 bg-background/95 backdrop-blur-xl border-t border-neutral-900">
-            <div className="flex flex-col items-center py-8 px-6 space-y-6">
-              <Link
-                href="#features"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Возможности
-              </Link>
-              <Link
-                href="#download"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Скачать
-              </Link>
-              <Link
-                href="/market"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Маркет
-              </Link>
-              <Link
-                href="#gallery"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Галерея
-              </Link>
-              <Link
-                href="/branding"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Брендинг
-              </Link>
-              <Link
-                href="#roadmap"
-                onClick={() => setMobileMenuOpen(false)}
-                className="text-lg text-neutral-300 hover:text-accent transition-colors"
-              >
-                Roadmap
-              </Link>
-              <a
-                href="#download"
-                onClick={() => setMobileMenuOpen(false)}
-                className="px-8 py-3 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors"
-              >
-                Скачать
-              </a>
-            </div>
+        {/* Mobile Menu */}
+        <div
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-neutral-900 ${
+            mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+          }`}
+        >
+          <div className="flex flex-col items-center py-6 px-6 space-y-4 bg-background">
+            <Link
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Возможности
+            </Link>
+            <Link
+              href="#download"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Скачать
+            </Link>
+            <Link
+              href="/market"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Маркет
+            </Link>
+            <Link
+              href="#gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Галерея
+            </Link>
+            <Link
+              href="/branding"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Брендинг
+            </Link>
+            <Link
+              href="#roadmap"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
+            >
+              Roadmap
+            </Link>
+            <a
+              href="#download"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors mt-2"
+            >
+              Скачать
+            </a>
           </div>
-        )}
+        </div>
       </header>
 
       {/* Hero Section */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-6 pt-20 pb-12">
-        <div className="text-center space-y-6 max-w-4xl">
-          <h1 className="text-5xl md:text-7xl font-light tracking-wider">
+      <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-24 md:pt-20 pb-8">
+        <div className="text-center space-y-4 max-w-4xl">
+          <h1 className="text-4xl md:text-7xl font-light tracking-wider">
             <span className="text-accent">Meander</span>
           </h1>
-          <p className="text-xl md:text-2xl font-light text-neutral-300">
+          <p className="text-lg md:text-2xl font-light text-neutral-300">
             Текстовые квесты
           </p>
-          <p className="max-w-2xl mx-auto text-neutral-400 leading-relaxed text-lg">
+          <p className="max-w-2xl mx-auto text-neutral-400 leading-relaxed text-base md:text-lg">
             Бесплатная программа для создания и прохождения текстовых квестов.
             Визуальный редактор, ветвящиеся сюжеты и маркет историй.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-8">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <a
               href={getDownloadLink(currentPlatform)}
-              className="px-8 py-4 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-lg"
+              className="px-6 py-3 md:px-8 md:py-4 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-base md:text-lg"
             >
               Скачать
             </a>
             <Link
               href="#gallery"
-              className="px-8 py-4 border border-neutral-700 hover:border-neutral-500 transition-colors rounded-lg text-lg"
+              className="px-6 py-3 md:px-8 md:py-4 border border-neutral-700 hover:border-neutral-500 transition-colors rounded-lg text-base md:text-lg"
             >
               Смотреть демо
             </Link>
           </div>
         </div>
-        
+
         {/* Мокапы телефонов */}
-        <div className="flex justify-center gap-8 mt-16">
+        <div className="flex justify-center gap-4 md:gap-8 mt-10 md:mt-16">
           <img
             src="/images/phone-mockup-1.png"
             alt="Meander на Android"
-            className="h-64 md:h-80 w-auto object-contain"
+            className="h-48 md:h-80 w-auto object-contain"
           />
           <img
             src="/images/phone-mockup-2.png"
             alt="Meander интерфейс"
-            className="h-64 md:h-80 w-auto object-contain"
+            className="h-48 md:h-80 w-auto object-contain"
           />
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 px-6 border-t border-neutral-900">
+      <section id="features" className="py-12 md:py-24 px-4 md:px-6 border-t border-neutral-900">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-light tracking-widest mb-12 text-center">
+          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-8 md:mb-12 text-center">
             возможности
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="p-6 bg-neutral-900/50 rounded-lg hover:bg-neutral-900 transition-colors"
+                className="p-4 md:p-6 bg-neutral-900/50 rounded-lg hover:bg-neutral-900 transition-colors"
               >
-                <feature.icon className="w-8 h-8 text-accent mb-3" strokeWidth={1.5} />
-                <h3 className="text-lg font-medium mb-2">{feature.title}</h3>
+                <feature.icon className="w-7 h-7 md:w-8 md:h-8 text-accent mb-2 md:mb-3" strokeWidth={1.5} />
+                <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2">{feature.title}</h3>
                 <p className="text-neutral-400 text-sm leading-relaxed">
                   {feature.description}
                 </p>
@@ -365,35 +367,35 @@ export default function Home() {
       </section>
 
       {/* Download Section */}
-      <section id="download" className="py-24 px-6 bg-neutral-950">
+      <section id="download" className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-light tracking-widest mb-12">
+          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12">
             скачать
           </h2>
-          
+
           {/* Platform selector */}
-          <div className="flex flex-wrap justify-center gap-3 mb-8">
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-6 md:mb-8">
             {platforms.map((platform) => (
               <button
                 key={platform.type}
                 onClick={() => setCurrentPlatform(platform.type)}
-                className={`px-4 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm transition-colors flex items-center gap-2 ${
                   currentPlatform === platform.type
                     ? "bg-accent text-black"
                     : "bg-neutral-900 text-neutral-400 hover:text-foreground"
                 }`}
               >
-                <platform.icon className="w-4 h-4" strokeWidth={1.5} />
+                <platform.icon className="w-3.5 h-3.5 md:w-4 md:h-4" strokeWidth={1.5} />
                 <span>{platform.name}</span>
               </button>
             ))}
           </div>
 
           {/* Main download button */}
-          <div className="flex flex-col items-center gap-12 mb-12">
+          <div className="flex flex-col items-center gap-8 md:gap-12 mb-8 md:mb-12">
             <a
               href={getDownloadLink(currentPlatform)}
-              className="inline-block px-12 py-5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-lg"
+              className="inline-block px-8 py-3 md:px-12 md:py-5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-base md:text-lg"
             >
               Скачать для {platforms.find(p => p.type === currentPlatform)?.name}
             </a>
@@ -420,7 +422,7 @@ export default function Home() {
           {currentPlatform === "android" && (
             <div className="space-y-3 text-sm">
               <p className="text-neutral-500">Другие источники:</p>
-              <div className="flex flex-wrap justify-center gap-4">
+              <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-center md:gap-4">
                 {getAlternativeLinks("android").map((link, index) => (
                   <a
                     key={index}
@@ -437,7 +439,7 @@ export default function Home() {
           )}
 
           {/* GitHub releases */}
-          <div className="mt-12 pt-8 border-t border-neutral-900">
+          <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-neutral-900">
             <a
               href="https://github.com/IILLUMINATION/meanderPUBLIC/releases"
               className="text-neutral-400 hover:text-accent transition-colors text-sm"
@@ -449,12 +451,12 @@ export default function Home() {
       </section>
 
       {/* Gallery/Demo Section */}
-      <section id="gallery" className="py-24 px-6">
+      <section id="gallery" className="py-12 md:py-24 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-2xl font-light tracking-widest mb-12 text-center">
+          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
             галерея / демо
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
               <img
                 src="/images/мокап программы из гугл плей красивый(не реальный скрин).jpg"
@@ -502,24 +504,24 @@ export default function Home() {
       </section>
 
       {/* Roadmap Section */}
-      <section id="roadmap" className="py-24 px-6 bg-neutral-950">
+      <section id="roadmap" className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-light tracking-widest mb-12 text-center">
+          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
             roadmap
           </h2>
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {roadmapItems.map((item, index) => (
               <div
                 key={index}
-                className="p-6 bg-neutral-900 rounded-lg border border-neutral-800"
+                className="p-4 md:p-6 bg-neutral-900 rounded-lg border border-neutral-800"
               >
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
                   <div>
-                    <h3 className="text-lg font-medium mb-2">{item.title}</h3>
+                    <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2">{item.title}</h3>
                     <p className="text-neutral-400 text-sm">{item.description}</p>
                   </div>
                   <span
-                    className={`px-3 py-1 text-xs rounded-lg ${
+                    className={`px-3 py-1 text-xs rounded-lg self-start ${
                       item.status === "planned"
                         ? "bg-neutral-800 text-neutral-400"
                         : "bg-accent/20 text-accent"
@@ -535,21 +537,21 @@ export default function Home() {
       </section>
 
       {/* Links Section */}
-      <section id="links" className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-2xl font-light tracking-widest mb-12">
+      <section id="links" className="py-12 md:py-24 px-4 md:px-6">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
             ссылки
           </h2>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col items-center gap-3 md:flex-row md:flex-wrap md:justify-center md:gap-4">
             {socialLinks.map((link, index) => (
               <a
                 key={index}
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3 bg-neutral-950 hover:bg-neutral-900 border border-neutral-900 hover:border-accent/50 rounded-lg transition-colors flex items-center gap-2"
+                className="w-full md:w-auto px-5 py-3 md:px-6 md:py-3 bg-neutral-950 hover:bg-neutral-900 border border-neutral-900 hover:border-accent/50 rounded-lg transition-colors flex items-center gap-2 justify-center"
               >
-                <link.icon className="w-4 h-4" strokeWidth={1.5} />
+                <link.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
                 <span>{link.name}</span>
               </a>
             ))}
@@ -558,7 +560,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 px-6 border-t border-neutral-900">
+      <footer className="py-6 md:py-8 px-4 md:px-6 border-t border-neutral-900">
         <div className="max-w-6xl mx-auto text-center text-neutral-600 text-sm">
           <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
         </div>
