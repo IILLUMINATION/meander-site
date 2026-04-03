@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
+import axios from "axios";
 import {
   LayoutGrid,
   GitBranch,
@@ -22,7 +23,33 @@ import {
   Heart,
   Menu,
   X,
+  BookOpen,
+  Download,
+  User,
+  Star,
+  ChevronRight,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
+
+const API_URL = "https://backend.meander.sbs";
+
+interface Quest {
+  id: string;
+  title: string;
+  description: string;
+  author_id: string;
+  author_name?: string;
+  author_is_verified?: boolean;
+  preview_image_url: string | null;
+  like_count: number;
+  dislike_count: number;
+  downloads_count: number;
+  average_rating: number;
+  is_demo: boolean;
+  estimated_playtime: number;
+  created_at: string;
+}
 
 const features = [
   {
@@ -108,6 +135,25 @@ export default function Home() {
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [topQuests, setTopQuests] = useState<Quest[]>([]);
+  const [questsLoading, setQuestsLoading] = useState(true);
+
+  useEffect(() => {
+    const loadTopQuests = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/quests`);
+        const sorted = [...res.data]
+          .sort((a: Quest, b: Quest) => b.downloads_count - a.downloads_count)
+          .slice(0, 5);
+        setTopQuests(sorted);
+      } catch {
+        setTopQuests([]);
+      } finally {
+        setQuestsLoading(false);
+      }
+    };
+    loadTopQuests();
+  }, []);
 
   useEffect(() => {
     const detectPlatform = () => {
@@ -512,6 +558,158 @@ export default function Home() {
               />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Docs CTA Section */}
+      <section className="py-12 md:py-24 px-4 md:px-6 border-t border-neutral-900">
+        <div className="max-w-4xl mx-auto">
+          <Link
+            href="/docs"
+            className="block group"
+          >
+            <div className="p-6 md:p-10 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-accent/40 transition-all">
+              <div className="flex items-start gap-4 md:gap-6">
+                <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0">
+                  <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-accent" strokeWidth={1.5} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs text-accent uppercase tracking-widest font-medium">Документация</span>
+                    <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-accent group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <h2 className="text-xl md:text-3xl font-light tracking-wider mb-3 group-hover:text-accent transition-colors">
+                    Научись создавать квесты
+                  </h2>
+                  <p className="text-neutral-400 text-sm md:text-base leading-relaxed">
+                    Пошаговые гайды от установки до публикации. Разберись в редакторе, 
+                    мультимедиа, ветвлениях и маркете.
+                  </p>
+                  <div className="flex flex-wrap gap-3 mt-4">
+                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Быстрый старт</span>
+                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Видео-гайды</span>
+                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Формат .mnd</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Top Quests Section */}
+      <section className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-between mb-6 md:mb-10">
+            <h2 className="text-xl md:text-2xl font-light tracking-widest">
+              топ квестов
+            </h2>
+            <Link
+              href="/market"
+              className="text-sm text-neutral-500 hover:text-accent transition-colors flex items-center gap-1"
+            >
+              Все на маркете <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          {questsLoading ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="bg-neutral-900/50 rounded-lg border border-neutral-800 animate-pulse">
+                  <div className="aspect-[3/4] bg-neutral-800/50 rounded-t-lg" />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-neutral-800/50 rounded w-3/4" />
+                    <div className="h-2 bg-neutral-800/50 rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : topQuests.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
+              {topQuests.map((quest, index) => (
+                <Link
+                  key={quest.id}
+                  href={`/market/${quest.id}`}
+                  className="group bg-neutral-900/50 rounded-lg border border-neutral-800 hover:border-accent/30 transition-all overflow-hidden"
+                >
+                  {/* Cover */}
+                  <div className="relative aspect-[3/4] bg-neutral-950">
+                    {quest.preview_image_url ? (
+                      <img
+                        src={quest.preview_image_url}
+                        alt={quest.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-neutral-700 text-3xl">
+                        🎮
+                      </div>
+                    )}
+                    {/* Rank badge */}
+                    <div className="absolute top-2 left-2">
+                      <span className={`px-2 py-0.5 text-xs font-bold rounded ${
+                        index === 0 ? "bg-yellow-500/90 text-black" :
+                        index === 1 ? "bg-neutral-400/90 text-black" :
+                        index === 2 ? "bg-amber-700/90 text-black" :
+                        "bg-neutral-800/90 text-neutral-400"
+                      }`}>
+                        #{index + 1}
+                      </span>
+                    </div>
+                    {/* Demo badge */}
+                    {quest.is_demo && (
+                      <div className="absolute top-2 right-2">
+                        <span className="px-1.5 py-0.5 bg-accent/80 text-black text-[10px] font-medium rounded">
+                          Демо
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="p-2.5 space-y-1.5">
+                    <h3 className="text-xs md:text-sm font-medium line-clamp-1 group-hover:text-accent transition-colors">
+                      {quest.title}
+                    </h3>
+                    <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-neutral-500">
+                      <User className="w-2.5 h-2.5 flex-shrink-0" />
+                      <span className="truncate">{quest.author_name || "Аноним"}</span>
+                      {quest.author_is_verified && (
+                        <CheckCircle className="w-2.5 h-2.5 text-accent flex-shrink-0" />
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] md:text-xs text-neutral-600">
+                      <span className="flex items-center gap-1">
+                        <Download className="w-2.5 h-2.5" />
+                        {quest.downloads_count}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Star className="w-2.5 h-2.5" />
+                        {quest.average_rating > 0 ? quest.average_rating.toFixed(1) : "—"}
+                      </span>
+                    </div>
+                    {quest.estimated_playtime > 0 && (
+                      <div className="flex items-center gap-1 text-[10px] text-neutral-600">
+                        <Clock className="w-2.5 h-2.5" />
+                        ~{quest.estimated_playtime} мин
+                      </div>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-neutral-500 text-sm">Пока нет квестов на маркете</p>
+              <Link
+                href="/market"
+                className="inline-block mt-4 text-sm text-accent hover:text-accent-hover transition-colors"
+              >
+                Станьте первым →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
