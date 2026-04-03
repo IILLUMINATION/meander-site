@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
 import Link from "next/link";
 import { Copy, Check, ExternalLink } from "lucide-react";
 
@@ -11,14 +10,33 @@ interface MarkdownRendererProps {
   content: string;
 }
 
+// Препроцессинг MD контента
+function preprocessContent(content: string): string {
+  // Заменяем YouTube ссылки на специальный маркер
+  const ytRegex = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})[^\s]*/g;
+  content = content.replace(ytRegex, (match) => {
+    const videoId = match.match(/([a-zA-Z0-9_-]{11})/)?.[1];
+    if (videoId) {
+      return `\n\n[YOUTUBE:${videoId}]\n\n`;
+    }
+    return match;
+  });
+
+  // Кодируем пути к изображениям с кириллицей
+  content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
+    // Если путь относительный и содержит кириллицу — кодируем
+    if (!src.startsWith('http') && /[^\x00-\x7F]/.test(src)) {
+      const encoded = src.split('/').map((part: string) => encodeURIComponent(part)).join('/');
+      return `![${alt}](${encoded})`;
+    }
+    return match;
+  });
+
+  return content;
+}
+
 // Компонент для YouTube видео
-function YouTubeEmbed({ url }: { url: string }) {
-  const videoId = url.match(
-    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
-  )?.[1];
-
-  if (!videoId) return null;
-
+function YouTubeEmbed({ videoId }: { videoId: string }) {
   return (
     <div className="my-6">
       <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950">
@@ -36,7 +54,7 @@ function YouTubeEmbed({ url }: { url: string }) {
 
 // Компонент блока кода с кнопкой копирования
 function CodeBlock({ code, language }: { code: string; language?: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(code);
@@ -70,65 +88,96 @@ function CodeBlock({ code, language }: { code: string; language?: string }) {
   );
 }
 
-// Извлечение YouTube URL из текста
-function extractYouTubeUrls(text: string): { text: string; videos: string[] } {
-  const ytRegex = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)[a-zA-Z0-9_-]{11}(?:[^\s]*)?/g;
-  const videos = text.match(ytRegex) || [];
-  const cleanedText = text.replace(ytRegex, "").trim();
-  return { text: cleanedText, videos };
+// Рекурсивное извлечение текста из React элементов
+function extractText(children: any): string {
+  if (typeof children === "string") return children;
+  if (Array.isArray(children)) {
+    return children.map(extractText).join("");
+  }
+  if (children && typeof children === "object" && "props" in children) {
+    return extractText(children.props.children);
+  }
+  return String(children || "");
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
-  // Мемоизируем обработку контента
-  const processedContent = useMemo(() => {
-    return content;
-  }, [content]);
+  const processedContent = useMemo(() => preprocessContent(content), [content]);
 
-  // Кастомные компоненты для рендеринга
   const components = {
-    // Заголовки
-    h1: ({ children, ...props }: any) => (
-      <h1 className="text-2xl md:text-4xl font-light tracking-wider mt-8 md:mt-12 mb-4 md:mb-6" {...props}>
-        {children}
-      </h1>
-    ),
-    h2: ({ children, ...props }: any) => (
-      <h2 className="text-xl md:text-2xl font-light mt-8 md:mt-10 mb-3 md:mb-4" {...props}>
-        {children}
-      </h2>
-    ),
-    h3: ({ children, ...props }: any) => (
-      <h3 className="text-base md:text-lg font-medium mt-6 mb-2" {...props}>
-        {children}
-      </h3>
-    ),
-    h4: ({ children, ...props }: any) => (
-      <h4 className="text-sm md:text-base font-medium mt-4 mb-2" {...props}>
-        {children}
-      </h4>
-    ),
+    // Заголовки с id для якорей
+    h1: ({ children, ...props }: any) => {
+      const text = extractText(children);
+      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
+      return (
+        <h1 id={id} className="text-2xl md:text-4xl font-light tracking-wider mt-8 md:mt-12 mb-4 md:mb-6" {...props}>
+          {children}
+        </h1>
+      );
+    },
+    h2: ({ children, ...props }: any) => {
+      const text = extractText(children);
+      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
+      return (
+        <h2 id={id} className="text-xl md:text-2xl font-light mt-8 md:mt-10 mb-3 md:mb-4" {...props}>
+          {children}
+        </h2>
+      );
+    },
+    h3: ({ children, ...props }: any) => {
+      const text = extractText(children);
+      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
+      return (
+        <h3 id={id} className="text-base md:text-lg font-medium mt-6 mb-2" {...props}>
+          {children}
+        </h3>
+      );
+    },
+    h4: ({ children, ...props }: any) => {
+      const text = extractText(children);
+      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
+      return (
+        <h4 id={id} className="text-sm md:text-base font-medium mt-4 mb-2" {...props}>
+          {children}
+        </h4>
+      );
+    },
 
-    // Параграфы с обработкой YouTube
+    // Параграфы с обработкой YouTube маркеров
     p: ({ children, ...props }: any) => {
-      const textContent = typeof children === "string" ? children : "";
-      const { text, videos } = extractYouTubeUrls(textContent);
+      const text = extractText(children);
+
+      // Проверяем на YouTube маркер
+      const ytMatch = text.match(/\[YOUTUBE:([a-zA-Z0-9_-]{11})\]/);
+      if (ytMatch) {
+        return <YouTubeEmbed videoId={ytMatch[1]} />;
+      }
+
+      // Проверяем содержит ли текст YouTube маркер вместе с другим текстом
+      const ytRegex = /\[YOUTUBE:([a-zA-Z0-9_-]{11})\]/g;
+      const matches = [...text.matchAll(ytRegex)];
+
+      if (matches.length > 0) {
+        const cleanText = text.replace(ytRegex, "").trim();
+        const videoIds = matches.map(m => m[1]);
+
+        return (
+          <>
+            {cleanText && (
+              <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
+                {children}
+              </p>
+            )}
+            {videoIds.map((id, i) => (
+              <YouTubeEmbed key={i} videoId={id} />
+            ))}
+          </>
+        );
+      }
 
       return (
-        <>
-          {text && (
-            <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
-              {text}
-            </p>
-          )}
-          {videos.map((url, i) => (
-            <YouTubeEmbed key={i} url={url} />
-          ))}
-          {!text && videos.length === 0 && (
-            <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
-              {children}
-            </p>
-          )}
-        </>
+        <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
+          {children}
+        </p>
       );
     },
 
@@ -266,8 +315,8 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
     <article className="prose-docs">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
-        rehypePlugins={[rehypeRaw]}
         components={components}
+        urlTransform={(url) => url}
       >
         {processedContent}
       </ReactMarkdown>
