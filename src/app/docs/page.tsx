@@ -271,6 +271,31 @@ export default function DocsPage() {
 
         {/* Content */}
         <main className="flex-1 py-8 md:py-12 px-4 md:px-12">
+          {/* Test Article Banner */}
+          <Link
+            href="/docs/test-article"
+            className="block mb-12 p-5 md:p-6 bg-accent/5 hover:bg-accent/10 rounded-xl border border-accent/20 hover:border-accent/40 transition-all group"
+          >
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 bg-accent/10 rounded-lg">
+                <BookOpen className="w-5 h-5 text-accent" strokeWidth={1.5} />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs text-accent uppercase tracking-wider font-medium">Тест</span>
+                  <span className="text-xs text-neutral-600">~5 мин чтения</span>
+                </div>
+                <h3 className="text-base md:text-lg font-medium text-foreground group-hover:text-accent transition-colors mb-1">
+                  Создание первого квеста
+                </h3>
+                <p className="text-neutral-500 text-sm">
+                  Полное руководство с картинками, видео, кодом и таблицами — демо всех возможностей рендерера
+                </p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-neutral-600 group-hover:text-accent group-hover:translate-x-1 transition-all mt-2" />
+            </div>
+          </Link>
+
           {/* Quick Start Card */}
           <div className="mb-12 p-6 md:p-8 bg-neutral-900/50 rounded-xl border border-neutral-800">
             <div className="flex items-start gap-4 mb-6">
