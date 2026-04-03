@@ -72,7 +72,7 @@
 
 Посмотрите видео-гайд по созданию квеста:
 
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
+https://www.youtube.com/watch?v=jNQXAC9IVRw
 
 ---
 

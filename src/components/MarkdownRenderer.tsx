@@ -236,20 +236,20 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
 
     // Изображения
     img: ({ src, alt, ...props }: any) => (
-      <figure className="my-6 md:my-8">
+      <span className="block my-6 md:my-8">
         <img
           src={src}
           alt={alt || ""}
-          className="w-full rounded-xl border border-neutral-800"
+          className="max-w-full max-h-[70vh] w-auto h-auto rounded-xl border border-neutral-800 mx-auto block"
           loading="lazy"
           {...props}
         />
         {alt && (
-          <figcaption className="text-center text-xs text-neutral-600 mt-2 italic">
+          <span className="block text-center text-xs text-neutral-600 mt-2 italic">
             {alt}
-          </figcaption>
+          </span>
         )}
-      </figure>
+      </span>
     ),
 
     // Списки
