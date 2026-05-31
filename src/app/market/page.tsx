@@ -189,7 +189,7 @@ export default function MarketPage() {
           { headers: getTokenHeaders() }
         );
       }
-      const found = quests.find((q) => q.id === questId);
+      const found = allQuests.find((q) => q.id === questId);
       const safeTitle = (found?.title || "quest")
         .replace(/[\\/:*?"<>|]+/g, "")
         .trim() || "quest";
