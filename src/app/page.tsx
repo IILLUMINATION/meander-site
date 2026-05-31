@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Footer from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import axios from "axios";
@@ -23,7 +24,6 @@ import {
   Heart,
   Menu,
   X,
-  BookOpen,
   Download,
   User,
   Star,
@@ -31,8 +31,10 @@ import {
   CheckCircle,
   Clock,
 } from "lucide-react";
+import HeroCarousel from "@/components/HeroCarousel";
+import InfoCards from "@/components/InfoCards";
 
-const API_URL = "https://backend.meander.sbs";
+const API_URL = "/api/be";
 
 interface Quest {
   id: string;
@@ -175,13 +177,11 @@ export default function Home() {
     const platform = detectPlatform();
     setDetectedPlatform(platform);
     setCurrentPlatform(platform);
-    
-    // Показываем QR только на десктопных платформах И на широком экране
+
     const isDesktopPlatform = ["macos", "linux", "windows"].includes(platform);
     const isWideScreen = window.innerWidth >= 768;
     setIsDesktop(isDesktopPlatform && isWideScreen);
-    
-    // Обновляем при изменении размера окна
+
     const handleResize = () => {
       setIsDesktop(isDesktopPlatform && window.innerWidth >= 768);
     };
@@ -215,178 +215,130 @@ export default function Home() {
         { name: "GitHub (APK)", url: links.github },
         { name: "APKPure", url: links.apkpure },
         { name: "TrashBox", url: links.trashbox },
-        { name: "RuStore (старая версия)", url: links.rustore, note: true },
+        { name: "RuStore", url: links.rustore, note: true },
       ];
     }
     return [];
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
-        <nav className="max-w-6xl mx-auto px-4 md:px-6 py-3 md:py-4 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
+    <div className="min-h-screen" style={{ background: "var(--m3-surface)" }}>
+      <header className="m3-top-app-bar">
+        <nav className="m3-top-app-bar-inner justify-between">
+          <Link href="/" className="m3-logo">
             <img
-              src="/images/лого свг без фона.svg"
+              src="/images/logo.svg"
               alt="Meander"
               className="h-7 md:h-8 w-auto"
             />
           </Link>
-          
-          {/* Desktop Menu */}
-          <div className="hidden md:flex items-center gap-8">
-            <ul className="flex gap-6 text-sm text-neutral-400">
-              <li>
-                <Link href="#features" className="hover:text-accent transition-colors">
-                  Возможности
-                </Link>
-              </li>
-              <li>
-                <Link href="#download" className="hover:text-accent transition-colors">
-                  Скачать
-                </Link>
-              </li>
-              <li>
-                <Link href="/market" className="hover:text-accent transition-colors">
-                  Маркет
-                </Link>
-              </li>
-              <li>
-                <Link href="#gallery" className="hover:text-accent transition-colors">
-                  Галерея
-                </Link>
-              </li>
-              <li>
-                <Link href="/branding" className="hover:text-accent transition-colors">
-                  Брендинг
-                </Link>
-              </li>
-              <li>
-                <Link href="/docs" className="hover:text-accent transition-colors">
-                  Документация
-                </Link>
-              </li>
-              <li>
-                <Link href="#roadmap" className="hover:text-accent transition-colors">
-                  Roadmap
-                </Link>
-              </li>
-            </ul>
-            <a
-              href="#download"
-              className="px-4 py-2 bg-accent hover:bg-accent-hover text-black text-sm font-medium rounded-lg transition-colors"
-            >
+
+          <div className="hidden md:flex items-center gap-2 ml-auto">
+            <Link href="#features" className="m3-nav-item">Возможности</Link>
+            <Link href="#download" className="m3-nav-item">Скачать</Link>
+            <Link href="/market" className="m3-nav-item">Маркет</Link>
+            <Link href="#gallery" className="m3-nav-item">Галерея</Link>
+            <Link href="/branding" className="m3-nav-item">Брендинг</Link>
+            <Link href="/docs" className="m3-nav-item">Документация</Link>
+            <Link href="#roadmap" className="m3-nav-item">Roadmap</Link>
+            <a href="#download" className="m3-btn m3-btn-filled ml-2">
               Скачать
             </a>
           </div>
 
-          {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-neutral-400 hover:text-foreground transition-colors"
+            className="md:!hidden m3-icon-button ml-auto"
+            aria-label="Меню"
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </nav>
 
-        {/* Mobile Menu */}
-        <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out border-t border-neutral-900 ${
-            mobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-          }`}
-        >
-          <div className="flex flex-col items-center py-6 px-6 space-y-4 bg-background">
-            <Link
-              href="#features"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Возможности
-            </Link>
-            <Link
-              href="#download"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Скачать
-            </Link>
-            <Link
-              href="/market"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Маркет
-            </Link>
-            <Link
-              href="#gallery"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Галерея
-            </Link>
-            <Link
-              href="/branding"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Брендинг
-            </Link>
-            <Link
-              href="/docs"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Документация
-            </Link>
-            <Link
-              href="#roadmap"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-base text-neutral-300 hover:text-accent transition-colors py-2"
-            >
-              Roadmap
-            </Link>
-            <a
-              href="#download"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-6 py-2.5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors mt-2"
-            >
-              Скачать
-            </a>
-          </div>
-        </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="min-h-screen flex flex-col items-center justify-center px-4 pt-24 md:pt-20 pb-8">
-        <div className="text-center space-y-4 max-w-4xl">
-          <h1 className="text-4xl md:text-7xl font-light tracking-wider">
-            <span className="text-accent">Meander</span>
+      <div
+        className={`m3-drawer-scrim md:hidden ${mobileMenuOpen ? "is-open" : ""}`}
+        onClick={() => setMobileMenuOpen(false)}
+        aria-hidden="true"
+      />
+      <aside
+        className={`m3-drawer md:hidden ${mobileMenuOpen ? "is-open" : ""}`}
+        aria-hidden={!mobileMenuOpen}
+        aria-label="Главное меню"
+      >
+        <div className="m3-drawer-header">
+          <button
+            onClick={() => setMobileMenuOpen(false)}
+            className="m3-icon-button"
+            aria-label="Закрыть меню"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <nav className="m3-drawer-list">
+          <Link href="#features" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Возможности
+          </Link>
+          <Link href="#download" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Скачать
+          </Link>
+          <Link href="/market" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Маркет
+          </Link>
+          <hr className="m3-drawer-divider" />
+          <Link href="#gallery" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Галерея
+          </Link>
+          <Link href="/branding" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Брендинг
+          </Link>
+          <Link href="/docs" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Документация
+          </Link>
+          <Link href="#roadmap" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Roadmap
+          </Link>
+        </nav>
+        <div className="m3-drawer-footer">
+          <a
+            href="#download"
+            onClick={() => setMobileMenuOpen(false)}
+            className="m3-btn m3-btn-filled w-full"
+          >
+            Скачать
+          </a>
+        </div>
+      </aside>
+
+      <section className="min-h-[calc(100svh-4rem)] md:min-h-screen flex flex-col items-center justify-center px-4 pt-14 md:pt-20 pb-8">
+        <div className="text-center space-y-5 max-w-4xl">
+          <h1 className="m3-display-large" style={{ color: "var(--m3-primary)" }}>
+            Meander
           </h1>
-          <p className="text-lg md:text-2xl font-light text-neutral-300">
+          <p className="m3-headline-medium" style={{ color: "var(--m3-on-surface)" }}>
             Текстовые квесты
           </p>
-          <p className="max-w-2xl mx-auto text-neutral-400 leading-relaxed text-base md:text-lg">
+          <p
+            className="max-w-2xl mx-auto m3-body-large"
+            style={{ color: "var(--m3-on-surface-variant)" }}
+          >
             Бесплатная программа для создания и прохождения текстовых квестов.
             Визуальный редактор, ветвящиеся сюжеты и маркет историй.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <a
               href={getDownloadLink(currentPlatform)}
-              className="px-6 py-3 md:px-8 md:py-4 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-base md:text-lg"
+              className="m3-btn m3-btn-filled m3-btn-lg"
             >
               Скачать
             </a>
-            <Link
-              href="#gallery"
-              className="px-6 py-3 md:px-8 md:py-4 border border-neutral-700 hover:border-neutral-500 transition-colors rounded-lg text-base md:text-lg"
-            >
+            <a href="#gallery" className="m3-btn m3-btn-outlined m3-btn-lg">
               Смотреть демо
-            </Link>
+            </a>
           </div>
         </div>
 
-        {/* Мокапы телефонов */}
         <div className="flex justify-center gap-4 md:gap-8 mt-10 md:mt-16">
           <img
             src="/images/phone-mockup-1.png"
@@ -401,21 +353,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="features" className="py-12 md:py-24 px-4 md:px-6 border-t border-neutral-900">
+      <section
+        id="features"
+        className="py-12 md:py-24 px-4 md:px-6"
+        style={{ borderTop: "1px solid var(--m3-outline-variant)" }}
+      >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-8 md:mb-12 text-center">
+          <h2
+            className="m3-headline-medium mb-8 md:mb-12 text-center tracking-widest uppercase"
+            style={{ color: "var(--m3-on-surface-variant)", fontSize: "1.125rem" }}
+          >
             возможности
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {features.map((feature, index) => (
-              <div
-                key={index}
-                className="p-4 md:p-6 bg-neutral-900/50 rounded-lg hover:bg-neutral-900 transition-colors"
-              >
-                <feature.icon className="w-7 h-7 md:w-8 md:h-8 text-accent mb-2 md:mb-3" strokeWidth={1.5} />
-                <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2">{feature.title}</h3>
-                <p className="text-neutral-400 text-sm leading-relaxed">
+              <div key={index} className="m3-card">
+                <feature.icon
+                  className="w-7 h-7 md:w-8 md:h-8 mb-3"
+                  strokeWidth={1.5}
+                  style={{ color: "var(--m3-primary)" }}
+                />
+                <h3 className="m3-title-large mb-2" style={{ color: "var(--m3-on-surface)" }}>
+                  {feature.title}
+                </h3>
+                <p className="m3-body-medium" style={{ color: "var(--m3-on-surface-variant)" }}>
                   {feature.description}
                 </p>
               </div>
@@ -424,288 +385,230 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Download Section */}
-      <section id="download" className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
+      <section
+        id="download"
+        className="py-12 md:py-24 px-4 md:px-6"
+        style={{ background: "var(--m3-surface-container-lowest)" }}
+      >
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12">
+          <h2
+            className="m3-headline-medium mb-8 md:mb-12 text-center tracking-widest uppercase"
+            style={{ color: "var(--m3-on-surface-variant)", fontSize: "1.125rem" }}
+          >
             скачать
           </h2>
 
-          {/* Platform selector */}
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mb-6 md:mb-8">
+          <div className="flex flex-wrap justify-center gap-2 mb-8 md:mb-10">
             {platforms.map((platform) => (
               <button
                 key={platform.type}
                 onClick={() => setCurrentPlatform(platform.type)}
-                className={`px-3 py-2 md:px-4 md:py-2 rounded-lg text-xs md:text-sm transition-colors flex items-center gap-2 ${
-                  currentPlatform === platform.type
-                    ? "bg-accent text-black"
-                    : "bg-neutral-900 text-neutral-400 hover:text-foreground"
-                }`}
+                className={`m3-chip ${currentPlatform === platform.type ? "is-selected" : ""}`}
               >
-                <platform.icon className="w-3.5 h-3.5 md:w-4 md:h-4" strokeWidth={1.5} />
+                <platform.icon className="w-4 h-4" strokeWidth={1.5} />
                 <span>{platform.name}</span>
               </button>
             ))}
           </div>
 
-          {/* Main download button */}
-          <div className="flex flex-col items-center gap-8 md:gap-12 mb-8 md:mb-12">
-            <a
-              href={getDownloadLink(currentPlatform)}
-              className="inline-block px-8 py-3 md:px-12 md:py-5 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors text-base md:text-lg"
-            >
-              Скачать для {platforms.find(p => p.type === currentPlatform)?.name}
-            </a>
-
-            {/* QR Code для Google Play на десктопе */}
-            {isDesktop && (
-              <div className="flex flex-col items-center">
-                <div className="bg-white p-4 rounded-lg">
-                  <QRCodeSVG
-                    value={downloadLinks.android.googlePlay}
-                    size={180}
-                    level="H"
-                    includeMargin={false}
-                  />
+          <div className="m3-download-card mb-8 md:mb-10">
+            {currentPlatform === "android" ? (
+              <div className="m3-download-android">
+                <div className="m3-download-android-main">
+                  <a
+                    href={downloadLinks.android.googlePlay}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Скачать в Google Play"
+                    style={{ display: "inline-block", lineHeight: 0 }}
+                  >
+                    <img
+                      src="/google-play-ru.svg"
+                      alt="Доступно в Google Play"
+                      style={{ height: 56, width: "auto", display: "block" }}
+                    />
+                  </a>
+                  <p
+                    className="m3-body-small mt-3"
+                    style={{ color: "var(--m3-on-surface-variant)" }}
+                  >
+                    Рекомендуемый способ установки
+                  </p>
                 </div>
-                <p className="text-center text-neutral-500 text-sm mt-4">
-                  или скачайте на Android
+                {isDesktop && (
+                  <div className="m3-download-qr">
+                    <div className="m3-download-qr-frame">
+                      <QRCodeSVG
+                        value={downloadLinks.android.googlePlay}
+                        size={160}
+                        level="H"
+                        includeMargin={false}
+                      />
+                    </div>
+                    <p
+                      className="m3-body-small mt-3"
+                      style={{ color: "var(--m3-on-surface-variant)" }}
+                    >
+                      Сканируй с телефона
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="m3-download-desktop">
+                <a
+                  href={getDownloadLink(currentPlatform)}
+                  className="m3-btn m3-btn-filled m3-btn-lg"
+                >
+                  <Download className="w-5 h-5" strokeWidth={1.5} />
+                  <span>
+                    Скачать для {platforms.find((p) => p.type === currentPlatform)?.name}
+                  </span>
+                </a>
+                <p
+                  className="m3-body-small mt-4"
+                  style={{ color: "var(--m3-on-surface-variant)" }}
+                >
+                  Прямая загрузка с GitHub Releases
                 </p>
               </div>
             )}
           </div>
 
-          {/* Alternative links for Android */}
           {currentPlatform === "android" && (
-            <div className="space-y-3 text-sm">
-              <p className="text-neutral-500">Другие источники:</p>
-              <div className="flex flex-col items-center gap-2 md:flex-row md:flex-wrap md:justify-center md:gap-4">
+            <div className="m3-download-alt">
+              <p
+                className="m3-label-large uppercase tracking-widest mb-4"
+                style={{ color: "var(--m3-on-surface-variant)", fontSize: "0.75rem" }}
+              >
+                Альтернативные источники
+              </p>
+              <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:justify-center md:gap-3">
                 {getAlternativeLinks("android").map((link, index) => (
                   <a
                     key={index}
                     href={link.url}
-                    className={`text-neutral-400 hover:text-accent transition-colors ${
-                      link.note ? "text-neutral-600" : ""
-                    }`}
+                    className="m3-btn m3-btn-outlined"
+                    style={link.note ? { opacity: 0.7 } : undefined}
                   >
-                    {link.name} {link.note && "(старая версия)"}
+                    {link.name}
+                    {link.note && (
+                      <span className="m3-body-small" style={{ color: "var(--m3-outline)" }}>
+                        (старая)
+                      </span>
+                    )}
                   </a>
                 ))}
               </div>
             </div>
           )}
 
-          {/* GitHub releases */}
-          <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-neutral-900">
+          <div
+            className="mt-10 md:mt-14 pt-6 md:pt-8"
+            style={{ borderTop: "1px solid var(--m3-outline-variant)" }}
+          >
             <a
               href="https://github.com/IILLUMINATION/meanderPUBLIC/releases"
-              className="text-neutral-400 hover:text-accent transition-colors text-sm"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="m3-btn m3-btn-text"
             >
-              → Архив всех релизов на GitHub
+              Архив всех релизов на GitHub
             </a>
           </div>
         </div>
       </section>
 
-      {/* Gallery/Demo Section */}
       <section id="gallery" className="py-12 md:py-24 px-4 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
+          <h2
+            className="m3-headline-medium mb-8 md:mb-12 text-center tracking-widest uppercase"
+            style={{ color: "var(--m3-on-surface-variant)", fontSize: "1.125rem" }}
+          >
             галерея / демо
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап программы из гугл плей красивый(не реальный скрин).jpg"
-                alt="Скриншот программы из Google Play"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 2.jpg"
-                alt="Скриншот интерфейса"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 3.jpg"
-                alt="Скриншот редактора"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап программы из гугл плей красивый(не реальный скрин) 4.jpg"
-                alt="Скриншот программы"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап новость о выходе новой версии.png"
-                alt="Новость о выходе новой версии"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="aspect-video bg-neutral-950 rounded-lg overflow-hidden">
-              <img
-                src="/images/мокап о создании чата в simplex.png"
-                alt="Чат в Simplex"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            {[
+              { src: "/images/screenshot-1.jpg", alt: "Скриншот программы из Google Play" },
+              { src: "/images/screenshot-2.jpg", alt: "Скриншот интерфейса" },
+              { src: "/images/screenshot-3.jpg", alt: "Скриншот редактора" },
+              { src: "/images/screenshot-4.jpg", alt: "Скриншот программы" },
+              { src: "/images/screenshot-news.png", alt: "Новость о выходе новой версии" },
+              { src: "/images/screenshot-simplex.png", alt: "Чат в Simplex" },
+            ].map((shot, i) => (
+              <div
+                key={i}
+                className="aspect-video overflow-hidden"
+                style={{
+                  background: "var(--m3-surface-container-lowest)",
+                  borderRadius: "var(--m3-radius-lg)",
+                }}
+              >
+                <img src={shot.src} alt={shot.alt} className="w-full h-full object-cover" />
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Docs CTA Section */}
-      <section className="py-12 md:py-24 px-4 md:px-6 border-t border-neutral-900">
-        <div className="max-w-4xl mx-auto">
-          <Link
-            href="/docs"
-            className="block group"
-          >
-            <div className="p-6 md:p-10 bg-neutral-900/50 rounded-xl border border-neutral-800 hover:border-accent/40 transition-all">
-              <div className="flex items-start gap-4 md:gap-6">
-                <div className="p-3 bg-accent/10 rounded-lg flex-shrink-0">
-                  <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-accent" strokeWidth={1.5} />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-accent uppercase tracking-widest font-medium">Документация</span>
-                    <ChevronRight className="w-4 h-4 text-neutral-600 group-hover:text-accent group-hover:translate-x-1 transition-all" />
-                  </div>
-                  <h2 className="text-xl md:text-3xl font-light tracking-wider mb-3 group-hover:text-accent transition-colors">
-                    Научись создавать квесты
-                  </h2>
-                  <p className="text-neutral-400 text-sm md:text-base leading-relaxed">
-                    Пошаговые гайды от установки до публикации. Разберись в редакторе, 
-                    мультимедиа, ветвлениях и маркете.
-                  </p>
-                  <div className="flex flex-wrap gap-3 mt-4">
-                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Быстрый старт</span>
-                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Видео-гайды</span>
-                    <span className="px-3 py-1 bg-neutral-800 rounded-lg text-xs text-neutral-400">Формат .mnd</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </section>
+      <InfoCards />
 
-      {/* Top Quests Section */}
-      <section className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
+      <section
+        className="py-12 md:py-24 px-4 md:px-6"
+        style={{ background: "var(--m3-surface-container-lowest)" }}
+      >
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-between mb-6 md:mb-10">
-            <h2 className="text-xl md:text-2xl font-light tracking-widest">
+            <h2
+              className="m3-headline-medium tracking-widest uppercase"
+              style={{ color: "var(--m3-on-surface)", fontSize: "1.125rem" }}
+            >
               топ квестов
             </h2>
-            <Link
-              href="/market"
-              className="text-sm text-neutral-500 hover:text-accent transition-colors flex items-center gap-1"
-            >
+            <Link href="/market" className="m3-btn m3-btn-text">
               Все на маркете <ChevronRight className="w-3.5 h-3.5" />
             </Link>
           </div>
 
           {questsLoading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="bg-neutral-900/50 rounded-lg border border-neutral-800 animate-pulse">
-                  <div className="aspect-[3/4] bg-neutral-800/50 rounded-t-lg" />
-                  <div className="p-3 space-y-2">
-                    <div className="h-3 bg-neutral-800/50 rounded w-3/4" />
-                    <div className="h-2 bg-neutral-800/50 rounded w-1/2" />
-                  </div>
+            <div
+              className="m3-carousel-wrap"
+              style={
+                {
+                  "--m3-big": "min(calc(100vw - 136px), 480px)",
+                  "--m3-small": "56px",
+                  "--m3-gap": "8px",
+                  "--m3-pad": "16px",
+                  "--m3-h": "min(calc(100vw - 136px), 480px)",
+                } as React.CSSProperties
+              }
+            >
+              <div className="m3-carousel-viewport" aria-hidden="true">
+                <div className="m3-carousel-track">
+                  <div
+                    className="m3-carousel-item animate-pulse"
+                    data-active="true"
+                    style={{ background: "var(--m3-surface-container-high)" }}
+                  />
+                  <div
+                    className="m3-carousel-item animate-pulse"
+                    style={{ background: "var(--m3-surface-container)" }}
+                  />
+                  <div
+                    className="m3-carousel-item animate-pulse"
+                    style={{ background: "var(--m3-surface-container)" }}
+                  />
                 </div>
-              ))}
+              </div>
             </div>
           ) : topQuests.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4">
-              {topQuests.map((quest, index) => (
-                <Link
-                  key={quest.id}
-                  href={`/market/${quest.id}`}
-                  className="group bg-neutral-900/50 rounded-lg border border-neutral-800 hover:border-accent/30 transition-all overflow-hidden"
-                >
-                  {/* Cover */}
-                  <div className="relative aspect-[3/4] bg-neutral-950">
-                    {quest.preview_image_url ? (
-                      <img
-                        src={quest.preview_image_url}
-                        alt={quest.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <div className="flex items-center justify-center h-full text-neutral-700 text-3xl">
-                        🎮
-                      </div>
-                    )}
-                    {/* Rank badge */}
-                    <div className="absolute top-2 left-2">
-                      <span className={`px-2 py-0.5 text-xs font-bold rounded ${
-                        index === 0 ? "bg-yellow-500/90 text-black" :
-                        index === 1 ? "bg-neutral-400/90 text-black" :
-                        index === 2 ? "bg-amber-700/90 text-black" :
-                        "bg-neutral-800/90 text-neutral-400"
-                      }`}>
-                        #{index + 1}
-                      </span>
-                    </div>
-                    {/* Demo badge */}
-                    {quest.is_demo && (
-                      <div className="absolute top-2 right-2">
-                        <span className="px-1.5 py-0.5 bg-accent/80 text-black text-[10px] font-medium rounded">
-                          Демо
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Info */}
-                  <div className="p-2.5 space-y-1.5">
-                    <h3 className="text-xs md:text-sm font-medium line-clamp-1 group-hover:text-accent transition-colors">
-                      {quest.title}
-                    </h3>
-                    <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-neutral-500">
-                      <User className="w-2.5 h-2.5 flex-shrink-0" />
-                      <span className="truncate">{quest.author_name || "Аноним"}</span>
-                      {quest.author_is_verified && (
-                        <CheckCircle className="w-2.5 h-2.5 text-accent flex-shrink-0" />
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] md:text-xs text-neutral-600">
-                      <span className="flex items-center gap-1">
-                        <Download className="w-2.5 h-2.5" />
-                        {quest.downloads_count}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Star className="w-2.5 h-2.5" />
-                        {quest.average_rating > 0 ? Number(quest.average_rating).toFixed(1) : "—"}
-                      </span>
-                    </div>
-                    {quest.estimated_playtime > 0 && (
-                      <div className="flex items-center gap-1 text-[10px] text-neutral-600">
-                        <Clock className="w-2.5 h-2.5" />
-                        ~{quest.estimated_playtime} мин
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              ))}
-            </div>
+            <HeroCarousel quests={topQuests} />
           ) : (
             <div className="text-center py-12">
-              <p className="text-neutral-500 text-sm">Пока нет квестов на маркете</p>
-              <Link
-                href="/market"
-                className="inline-block mt-4 text-sm text-accent hover:text-accent-hover transition-colors"
-              >
+              <p className="m3-body-medium" style={{ color: "var(--m3-on-surface-variant)" }}>
+                Пока нет квестов на маркете
+              </p>
+              <Link href="/market" className="m3-btn m3-btn-text mt-4">
                 Станьте первым →
               </Link>
             </div>
@@ -713,28 +616,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Roadmap Section */}
-      <section id="roadmap" className="py-12 md:py-24 px-4 md:px-6 bg-neutral-950">
+      <section
+        id="roadmap"
+        className="py-12 md:py-24 px-4 md:px-6"
+      >
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
+          <h2
+            className="m3-headline-medium mb-8 md:mb-12 text-center tracking-widest uppercase"
+            style={{ color: "var(--m3-on-surface-variant)", fontSize: "1.125rem" }}
+          >
             roadmap
           </h2>
           <div className="space-y-3 md:space-y-4">
             {roadmapItems.map((item, index) => (
-              <div
-                key={index}
-                className="p-4 md:p-6 bg-neutral-900 rounded-lg border border-neutral-800"
-              >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2">
-                  <div>
-                    <h3 className="text-base md:text-lg font-medium mb-1 md:mb-2">{item.title}</h3>
-                    <p className="text-neutral-400 text-sm">{item.description}</p>
+              <div key={index} className="m3-card">
+                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                  <div className="flex-1">
+                    <h3
+                      className="m3-title-large mb-1.5"
+                      style={{ color: "var(--m3-on-surface)" }}
+                    >
+                      {item.title}
+                    </h3>
+                    <p
+                      className="m3-body-medium"
+                      style={{ color: "var(--m3-on-surface-variant)" }}
+                    >
+                      {item.description}
+                    </p>
                   </div>
                   <span
-                    className={`px-3 py-1 text-xs rounded-lg self-start ${
-                      item.status === "planned"
-                        ? "bg-neutral-800 text-neutral-400"
-                        : "bg-accent/20 text-accent"
+                    className={`m3-badge self-start ${
+                      item.status === "planned" ? "" : "m3-badge-primary"
                     }`}
                   >
                     {item.status === "planned" ? "Запланировано" : "В работе"}
@@ -746,35 +659,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Links Section */}
-      <section id="links" className="py-12 md:py-24 px-4 md:px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-xl md:text-2xl font-light tracking-widest mb-6 md:mb-12 text-center">
-            ссылки
-          </h2>
-          <div className="flex flex-col items-center gap-3 md:flex-row md:flex-wrap md:justify-center md:gap-4">
-            {socialLinks.map((link, index) => (
-              <a
-                key={index}
-                href={link.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full md:w-auto px-5 py-3 md:px-6 md:py-3 bg-neutral-950 hover:bg-neutral-900 border border-neutral-900 hover:border-accent/50 rounded-lg transition-colors flex items-center gap-2 justify-center"
-              >
-                <link.icon className="w-4 h-4 flex-shrink-0" strokeWidth={1.5} />
-                <span>{link.name}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="py-6 md:py-8 px-4 md:px-6 border-t border-neutral-900">
-        <div className="max-w-6xl mx-auto text-center text-neutral-600 text-sm">
-          <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

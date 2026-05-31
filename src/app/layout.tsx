@@ -47,7 +47,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Google OAuth Client ID (должен совпадать с бэкендом)
 const GOOGLE_CLIENT_ID = "410112450155-828dsu9o968v0vdg2g0870ioaafoa0is.apps.googleusercontent.com";
 
 export default function RootLayout({

@@ -23,10 +23,11 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollToTop}
-      className="fixed bottom-6 right-6 z-50 p-3 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-accent/40 rounded-full shadow-lg transition-all"
+      className="m3-fab fixed bottom-6 right-6 z-50"
       aria-label="Наверх"
+      style={{ width: 48, height: 48 }}
     >
-      <ArrowUp className="w-5 h-5 text-neutral-400 hover:text-accent transition-colors" />
+      <ArrowUp className="w-5 h-5" strokeWidth={2} />
     </button>
   );
 }

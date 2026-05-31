@@ -1,19 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import Footer from "@/components/Footer";
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { CredentialResponse } from "@react-oauth/google";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import QuestCover from "@/components/QuestCover";
 import {
   Download,
   Heart,
   Clock,
-  User,
   LogOut,
   CheckCircle,
   Star,
-  ArrowLeft,
   Share2,
   Flag,
   MessageSquare,
@@ -22,10 +23,10 @@ import {
   Send,
   Edit2,
   X,
-  QrCode,
+  ArrowLeft,
 } from "lucide-react";
 
-const API_URL = "https://backend.meander.sbs";
+const API_URL = "/api/be";
 
 interface Quest {
   id: string;
@@ -104,13 +105,12 @@ export default function QuestDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
-  const [userVote, setUserVote] = useState<boolean | null>(null); // true = like, false = dislike
+  const [userVote, setUserVote] = useState<boolean | null>(null);
   const [userReview, setUserReview] = useState<{ rating: number; text_content: string; hasData: boolean } | null>(null);
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [isEditingReview, setIsEditingReview] = useState(false);
-  const [showQRCode, setShowQRCode] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -122,9 +122,10 @@ export default function QuestDetailPage() {
   }, []);
 
   useEffect(() => {
-    if (questId && user) {
+    if (questId) {
       loadQuestData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questId, user]);
 
   const getTokenHeaders = () => {
@@ -145,66 +146,53 @@ export default function QuestDetailPage() {
       setQuest(questRes.data);
       setReviews(reviewsRes.data || []);
 
-      // Проверяем авторизацию через токен (не через user state)
       const token = localStorage.getItem("meander_token");
       if (token) {
-        // Загружаем голос пользователя
         try {
           const voteRes = await axios.get(`${API_URL}/quests/${questId}/my-vote`, { headers: getTokenHeaders() });
-          console.log("Vote response:", voteRes.data);
           if (voteRes.data && voteRes.data.is_like !== undefined) {
             setUserVote(voteRes.data.is_like);
-          } else if (voteRes.data && Object.keys(voteRes.data).length === 0) {
-            // Пустой объект - нет голоса
+          } else {
             setUserVote(null);
           }
-        } catch (e: any) {
-          console.log("No vote yet:", e.response?.data || e.message);
+        } catch {
           setUserVote(null);
         }
 
-        // Загружаем отзыв пользователя
         try {
           const reviewRes = await axios.get(`${API_URL}/quests/${questId}/my-review`, { headers: getTokenHeaders() });
-          console.log("Review response:", reviewRes.data);
-          
-          // Проверяем есть ли данные (rating ИЛИ text_content)
           const hasRating = reviewRes.data && reviewRes.data.rating !== undefined && reviewRes.data.rating !== null && reviewRes.data.rating > 0;
           const hasText = reviewRes.data && reviewRes.data.text_content && reviewRes.data.text_content.trim().length > 0;
-          
+
           if (hasRating || hasText) {
-            const reviewData = {
+            setUserReview({
               rating: reviewRes.data.rating || 0,
               text_content: reviewRes.data.text_content || "",
-              hasData: hasRating || hasText,
-            };
-            setUserReview(reviewData);
+              hasData: true,
+            });
             if (hasText) {
               setReviewText(reviewRes.data.text_content);
               setReviewRating(reviewRes.data.rating || 5);
             } else if (hasRating) {
-              // Только рейтинг без текста
               setReviewRating(reviewRes.data.rating);
-              setIsEditingReview(true); // Предлагаем добавить текст
+              setIsEditingReview(true);
             }
           } else {
-            // Отзыва нет вообще
             setUserReview(null);
             setReviewText("");
             setReviewRating(5);
             setIsEditingReview(false);
           }
-        } catch (e: any) {
-          console.log("No review yet:", e.response?.data || e.message);
+        } catch {
           setUserReview(null);
           setReviewText("");
           setReviewRating(5);
           setIsEditingReview(false);
         }
       }
-    } catch (err: any) {
-      console.error("Failed to load quest:", err);
-      setError(err.response?.data?.error || "Не удалось загрузить квест");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e.response?.data?.error || "Не удалось загрузить квест");
     } finally {
       setLoading(false);
     }
@@ -213,19 +201,16 @@ export default function QuestDetailPage() {
   const handleGoogleSignIn = async (credentialResponse: CredentialResponse) => {
     try {
       if (!credentialResponse.credential) return;
-
       const response = await axios.post(`${API_URL}/auth/google/token`, {
         idToken: credentialResponse.credential,
       });
-
-      const { token, user } = response.data;
+      const { token, user: u } = response.data;
       localStorage.setItem("meander_token", token);
-      localStorage.setItem("meander_user", JSON.stringify(user));
-      setUser(user);
-      setTimeout(() => loadQuestData(), 200);
-    } catch (err: any) {
-      console.error("Sign in error:", err);
-      alert("Ошибка входа: " + (err.response?.data?.error || err.message));
+      localStorage.setItem("meander_user", JSON.stringify(u));
+      setUser(u);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      alert("Ошибка входа: " + (e.response?.data?.error || e.message));
     }
   };
 
@@ -249,9 +234,26 @@ export default function QuestDetailPage() {
           { headers: getTokenHeaders() }
         );
       }
-      window.open(`${API_URL}/quests/${questId}/file`, "_blank");
+      const res = await axios.get(`${API_URL}/quests/${questId}/file`, {
+        headers: getTokenHeaders(),
+        responseType: "blob",
+      });
+      const safeTitle = (quest?.title || "quest")
+        .replace(/[\\/:*?"<>|]+/g, "")
+        .trim() || "quest";
+      const filename = `${safeTitle}.mnd`;
+      const blob = new Blob([res.data], { type: "application/octet-stream" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download error:", err);
+      alert("Не удалось скачать квест");
     }
   };
 
@@ -261,23 +263,17 @@ export default function QuestDetailPage() {
       return;
     }
     try {
-      // Если голос совпадает - убираем, если нет - меняем
-      const action = userVote === isLike ? 'remove' : 'set';
-      
+      const action = userVote === isLike ? "remove" : "set";
       await axios.post(
         `${API_URL}/quests/${questId}/vote`,
         { action, is_like: isLike },
         { headers: getTokenHeaders() }
       );
-      
-      // Обновляем состояние
       setUserVote(userVote === isLike ? null : isLike);
-      
-      // Перезагружаем данные для обновления счетчиков
       await loadQuestData();
-    } catch (err: any) {
-      console.error("Vote error:", err);
-      alert("Ошибка голосования: " + (err.response?.data?.error || err.message));
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      alert("Ошибка голосования: " + (e.response?.data?.error || e.message));
     }
   };
 
@@ -290,7 +286,6 @@ export default function QuestDetailPage() {
       alert("Введите текст отзыва или поставьте оценку");
       return;
     }
-
     try {
       setIsSubmittingReview(true);
       await axios.post(
@@ -298,17 +293,12 @@ export default function QuestDetailPage() {
         { text_content: reviewText, rating: reviewRating },
         { headers: getTokenHeaders() }
       );
-      
-      const newReview = { rating: reviewRating, text_content: reviewText, hasData: true };
-      setUserReview(newReview);
-      setReviewText("");
-      setReviewRating(5);
+      setUserReview({ rating: reviewRating, text_content: reviewText, hasData: true });
       setIsEditingReview(false);
-      
       await loadQuestData();
-    } catch (err: any) {
-      console.error("Review error:", err);
-      alert("Ошибка: " + (err.response?.data?.error || err.message));
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } }; message?: string };
+      alert("Ошибка: " + (e.response?.data?.error || e.message));
     } finally {
       setIsSubmittingReview(false);
     }
@@ -328,252 +318,206 @@ export default function QuestDetailPage() {
     return (bytes / (1024 * 1024)).toFixed(1) + " МБ";
   };
 
-  const translateGenre = (genre: string) => {
-    return genreTranslations[genre] || genre;
-  };
+  const translateGenre = (genre: string) => genreTranslations[genre] || genre;
 
   const handleShare = () => {
-    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const url = typeof window !== "undefined" ? window.location.href : "";
     navigator.clipboard.writeText(url);
     alert("Ссылка скопирована в буфер обмена");
   };
 
-  const handleReport = () => {
-    alert("Функция жалобы будет добавлена позже");
-  };
-
-  const handleOpenQR = () => {
-    setShowQRCode(true);
-  };
-
-  const handleCloseQR = () => {
-    setShowQRCode(false);
-  };
+  const handleReport = () => alert("Функция жалобы будет добавлена позже");
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-neutral-400">Загрузка...</div>
+      <div className="min-h-screen m3-surface flex items-center justify-center">
+        <div className="text-center">
+          <div
+            className="w-8 h-8 rounded-full animate-spin mx-auto mb-4"
+            style={{
+              border: "2px solid var(--m3-outline-variant)",
+              borderTopColor: "var(--m3-primary)",
+            }}
+          />
+          <p className="m3-body-small m3-text-secondary">Загрузка квеста...</p>
+        </div>
       </div>
     );
   }
 
   if (error || !quest) {
     return (
-      <div className="min-h-screen bg-background">
-        <Header user={user} onSignIn={handleGoogleSignIn} onSignOut={handleSignOut} />
-        <div className="pt-32 px-6 max-w-4xl mx-auto">
-          <div className="text-center py-20">
-            <div className="text-neutral-400 mb-4">{error || "Квест не найден"}</div>
-            <Link href="/market" className="text-accent hover:underline">
-              ← Вернуться в маркет
-            </Link>
-          </div>
+      <div className="min-h-screen m3-surface">
+        <Header user={user} onSignIn={handleGoogleSignIn} onSignOut={handleSignOut} title="Квест не найден" />
+        <div className="pt-32 px-6 max-w-4xl mx-auto text-center py-20">
+          <h1 className="m3-headline-large mb-4">Квест не найден</h1>
+          <p className="m3-body-medium m3-text-secondary mb-6">{error}</p>
+          <Link href="/market" className="m3-btn m3-btn-filled">
+            Вернуться в маркет
+          </Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onSignIn={handleGoogleSignIn} onSignOut={handleSignOut} />
+    <div className="min-h-screen m3-surface">
+      <Header user={user} onSignIn={handleGoogleSignIn} onSignOut={handleSignOut} title={quest.title} />
 
-      <main className="pt-24 pb-24 px-6">
+      <main className="pt-6 pb-24 px-4 md:px-6">
         <div className="max-w-5xl mx-auto">
-          {/* Back button */}
-          <Link
-            href="/market"
-            className="inline-flex items-center gap-2 text-neutral-400 hover:text-accent mb-8 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Назад в маркет
-          </Link>
-
-          {/* Quest Header */}
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {/* Cover Image */}
-            <div className="aspect-square bg-neutral-950 rounded-lg overflow-hidden border border-neutral-900">
-              {quest.preview_image_url ? (
-                <img
-                  src={quest.preview_image_url}
-                  alt={quest.title}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full text-neutral-600 text-6xl">
-                  🎮
-                </div>
-              )}
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8 mb-10 md:mb-12">
+            <div
+              className="aspect-square overflow-hidden"
+              style={{
+                background: "var(--m3-surface-container)",
+                borderRadius: "var(--m3-radius-lg)",
+              }}
+            >
+              <QuestCover
+                src={quest.preview_image_url}
+                alt={quest.title}
+                loading="eager"
+                className="m3-quest-detail-cover"
+                imgClassName="w-full h-full object-cover"
+              />
             </div>
 
-            {/* Info */}
-            <div className="md:col-span-2 space-y-6">
+            <div className="md:col-span-2 space-y-5">
               <div>
-                <div className="flex items-start justify-between mb-2">
-                  <h1 className="text-3xl font-light">{quest.title}</h1>
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <h1 className="m3-headline-large">{quest.title}</h1>
                   {quest.is_demo && (
-                    <span className="px-3 py-1 bg-accent/20 text-accent text-sm rounded">
+                    <span
+                      className="px-3 py-1 m3-label-large flex-shrink-0"
+                      style={{
+                        background: "var(--m3-secondary-container)",
+                        color: "var(--m3-on-secondary-container)",
+                        borderRadius: "var(--m3-radius-sm)",
+                      }}
+                    >
                       Демо
                     </span>
                   )}
                 </div>
 
-                {/* Author */}
-                <div className="flex items-center gap-3 mb-4">
-                  <User className="w-5 h-5 text-neutral-500" />
+                <div className="mb-4">
                   {quest.author_id ? (
                     <Link
                       href={`/profile/${quest.author_id}`}
-                      className="text-neutral-300 hover:text-accent transition-colors flex items-center gap-2"
+                      className="m3-body-medium inline-flex items-center gap-2 hover:underline"
+                      style={{ color: "var(--m3-on-surface)" }}
                     >
                       <span>{quest.author_name || "Аноним"}</span>
                       {quest.author_is_verified && (
-                        <CheckCircle className="w-4 h-4 text-accent" />
+                        <CheckCircle className="w-4 h-4" style={{ color: "var(--m3-primary)" }} />
                       )}
                     </Link>
                   ) : (
-                    <span className="text-neutral-300">{quest.author_name || "Аноним"}</span>
+                    <span className="m3-body-medium">{quest.author_name || "Аноним"}</span>
                   )}
                 </div>
 
-                {/* Genres */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {quest.genres.map((genre, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 bg-neutral-800 text-neutral-300 text-sm rounded"
-                    >
-                      {translateGenre(genre)}
-                    </span>
-                  ))}
-                </div>
+                {quest.genres.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {quest.genres.map((genre, i) => (
+                      <span key={i} className="m3-chip" style={{ pointerEvents: "none" }}>
+                        {translateGenre(genre)}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-neutral-900/50 rounded-lg p-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-                    <Heart className="w-5 h-5" />
-                  </div>
-                  <div className="text-2xl font-light">{quest.like_count}</div>
-                  <div className="text-xs text-neutral-500">Лайков</div>
-                </div>
-                <div className="bg-neutral-900/50 rounded-lg p-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-                    <Download className="w-5 h-5" />
-                  </div>
-                  <div className="text-2xl font-light">{quest.downloads_count}</div>
-                  <div className="text-xs text-neutral-500">Скачиваний</div>
-                </div>
-                <div className="bg-neutral-900/50 rounded-lg p-4 text-center">
-                  <div className="flex items-center justify-center gap-2 text-neutral-400 mb-1">
-                    <Clock className="w-5 h-5" />
-                  </div>
-                  <div className="text-2xl font-light">{quest.estimated_playtime}</div>
-                  <div className="text-xs text-neutral-500">Минут</div>
-                </div>
+              <div className="grid grid-cols-3 gap-3">
+                <StatCard icon={<Heart className="w-5 h-5" />} value={quest.like_count} label="Лайков" />
+                <StatCard icon={<Download className="w-5 h-5" />} value={quest.downloads_count} label="Скачиваний" />
+                <StatCard icon={<Clock className="w-5 h-5" />} value={quest.estimated_playtime} label="Минут" />
               </div>
 
-              {/* Vote Buttons */}
-              <div className="flex gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => handleVote(true)}
-                  className={`px-6 py-3 rounded-lg transition-colors flex items-center gap-2 ${
-                    userVote === true
-                      ? "bg-accent text-black"
-                      : "bg-neutral-800 text-neutral-400 hover:text-accent"
-                  }`}
+                  className={`m3-btn w-full ${userVote === true ? "m3-btn-filled" : "m3-btn-tonal"}`}
                 >
-                  <ThumbsUp className="w-5 h-5" />
-                  <span>Нравится</span>
+                  <ThumbsUp className="w-4 h-4" />
+                  Нравится
                 </button>
                 <button
                   onClick={() => handleVote(false)}
-                  className={`px-6 py-3 rounded-lg transition-colors flex items-center gap-2 ${
-                    userVote === false
-                      ? "bg-neutral-700 text-white"
-                      : "bg-neutral-800 text-neutral-400 hover:text-accent"
-                  }`}
+                  className={`m3-btn w-full ${userVote === false ? "m3-btn-filled" : "m3-btn-tonal"}`}
                 >
-                  <ThumbsDown className="w-5 h-5" />
-                  <span>Не нравится</span>
+                  <ThumbsDown className="w-4 h-4" />
+                  Не нравится
                 </button>
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-3">
-                <button
-                  onClick={handleDownload}
-                  className="flex-1 px-6 py-3 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Download className="w-5 h-5" />
+              <div className="flex gap-2">
+                <button onClick={handleDownload} className="m3-btn m3-btn-filled flex-1">
+                  <Download className="w-4 h-4" />
                   Скачать {formatFileSize(quest.quest_size_bytes)}
                 </button>
-                <button
-                  onClick={handleOpenQR}
-                  className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
-                  title="QR-код для открытия в приложении"
-                >
-                  <QrCode className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={handleShare}
-                  className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
-                >
+                <button onClick={handleShare} className="m3-icon-button" aria-label="Поделиться">
                   <Share2 className="w-5 h-5" />
                 </button>
-                <button
-                  onClick={handleReport}
-                  className="px-4 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
-                >
+                <button onClick={handleReport} className="m3-icon-button" aria-label="Пожаловаться">
                   <Flag className="w-5 h-5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Description */}
-          <div className="bg-neutral-900/30 rounded-lg p-6 mb-12">
-            <h2 className="text-xl font-medium mb-4">Описание</h2>
-            <p className="text-neutral-300 leading-relaxed whitespace-pre-wrap">
+          <div className="m3-card mb-10 md:mb-12">
+            <h2 className="m3-title-large mb-3">Описание</h2>
+            <p className="m3-body-medium whitespace-pre-wrap" style={{ color: "var(--m3-on-surface-variant)", lineHeight: 1.6 }}>
               {quest.description || "Описание отсутствует"}
             </p>
           </div>
 
-          {/* Reviews Section */}
           <div className="mb-12">
-            <h2 className="text-xl font-medium mb-6 flex items-center gap-2">
+            <h2 className="m3-title-large mb-5 flex items-center gap-2">
               <MessageSquare className="w-5 h-5" />
               Отзывы ({reviews.length})
             </h2>
 
-            {/* User's Review - Display at top if exists */}
             {user && userReview && userReview.hasData && !isEditingReview && (
-              <div className="bg-accent/10 border border-accent/30 rounded-lg p-6 mb-8">
+              <div
+                className="mb-6 p-5"
+                style={{
+                  background: "var(--m3-primary-container)",
+                  color: "var(--m3-on-primary-container)",
+                  borderRadius: "var(--m3-radius-lg)",
+                }}
+              >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3">
                     {user.avatar_url ? (
                       <img
                         src={user.avatar_url}
                         alt={user.full_name || ""}
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
                         className="w-10 h-10 rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-accent/30 flex items-center justify-center text-accent font-bold">
+                      <div
+                        className="w-10 h-10 rounded-full flex items-center justify-center font-bold"
+                        style={{ background: "var(--m3-primary)", color: "var(--m3-on-primary)" }}
+                      >
                         {getInitials(user.full_name)}
                       </div>
                     )}
                     <div>
-                      <div className="font-medium text-accent">Ваш отзыв</div>
-                      <div className="flex items-center gap-1">
+                      <div className="m3-label-large">Ваш отзыв</div>
+                      <div className="flex items-center gap-0.5">
                         {[1, 2, 3, 4, 5].map((star) => (
                           <Star
                             key={star}
-                            className={`w-4 h-4 ${
-                              star <= userReview.rating
-                                ? "fill-accent text-accent"
-                                : "text-neutral-600"
-                            }`}
+                            className="w-4 h-4"
+                            style={{
+                              fill: star <= userReview.rating ? "currentColor" : "transparent",
+                              opacity: star <= userReview.rating ? 1 : 0.3,
+                            }}
                           />
                         ))}
                       </div>
@@ -581,45 +525,42 @@ export default function QuestDetailPage() {
                   </div>
                   <button
                     onClick={() => setIsEditingReview(true)}
-                    className="p-2 text-neutral-400 hover:text-accent transition-colors"
+                    className="m3-icon-button"
+                    aria-label="Редактировать"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                 </div>
                 {userReview.text_content && (
-                  <p className="text-neutral-300 leading-relaxed">
+                  <p className="m3-body-medium" style={{ lineHeight: 1.6 }}>
                     {userReview.text_content}
                   </p>
                 )}
               </div>
             )}
 
-            {/* Write/Edit Review Form */}
             {user && isEditingReview ? (
-              <div className="bg-neutral-900/30 rounded-lg p-6 mb-8">
+              <div className="m3-card mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-medium">
+                  <h3 className="m3-title-medium">
                     {userReview?.text_content ? "Редактировать отзыв" : "Оставить отзыв"}
                   </h3>
-                  <button
-                    onClick={cancelEdit}
-                    className="p-2 text-neutral-400 hover:text-foreground transition-colors"
-                  >
+                  <button onClick={cancelEdit} className="m3-icon-button" aria-label="Закрыть">
                     <X className="w-5 h-5" />
                   </button>
                 </div>
 
-                {/* Rating */}
                 <div className="mb-4">
-                  <label className="text-sm text-neutral-400 mb-2 block">Оценка</label>
-                  <div className="flex gap-2">
+                  <label className="m3-label-large m3-text-secondary mb-2 block">Оценка</label>
+                  <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         onClick={() => setReviewRating(star)}
-                        className={`p-1 transition-colors ${
-                          star <= reviewRating ? "text-accent" : "text-neutral-600"
-                        }`}
+                        className="p-1"
+                        style={{
+                          color: star <= reviewRating ? "var(--m3-primary)" : "var(--m3-outline)",
+                        }}
                       >
                         <Star className="w-6 h-6 fill-current" />
                       </button>
@@ -627,46 +568,43 @@ export default function QuestDetailPage() {
                   </div>
                 </div>
 
-                {/* Text */}
                 <textarea
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   placeholder="Напишите ваш отзыв..."
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-4 text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-accent/50 min-h-[120px]"
+                  className="m3-textarea w-full"
+                  style={{ minHeight: 120 }}
                 />
 
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-2 mt-4">
                   <button
                     onClick={submitReview}
                     disabled={isSubmittingReview || (!reviewText.trim() && !reviewRating)}
-                    className="flex-1 px-6 py-2 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="m3-btn m3-btn-filled flex-1"
                   >
                     <Send className="w-4 h-4" />
                     {isSubmittingReview ? "Отправка..." : "Опубликовать"}
                   </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="px-6 py-2 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors"
-                  >
+                  <button onClick={cancelEdit} className="m3-btn m3-btn-tonal">
                     Отмена
                   </button>
                 </div>
               </div>
             ) : user && !userReview?.hasData ? (
-              <div className="bg-neutral-900/30 rounded-lg p-6 mb-8">
-                <h3 className="text-lg font-medium mb-4">Оставить отзыв</h3>
+              <div className="m3-card mb-6">
+                <h3 className="m3-title-medium mb-4">Оставить отзыв</h3>
 
-                {/* Rating */}
                 <div className="mb-4">
-                  <label className="text-sm text-neutral-400 mb-2 block">Оценка</label>
-                  <div className="flex gap-2">
+                  <label className="m3-label-large m3-text-secondary mb-2 block">Оценка</label>
+                  <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
                         onClick={() => setReviewRating(star)}
-                        className={`p-1 transition-colors ${
-                          star <= reviewRating ? "text-accent" : "text-neutral-600"
-                        }`}
+                        className="p-1"
+                        style={{
+                          color: star <= reviewRating ? "var(--m3-primary)" : "var(--m3-outline)",
+                        }}
                       >
                         <Star className="w-6 h-6 fill-current" />
                       </button>
@@ -674,234 +612,219 @@ export default function QuestDetailPage() {
                   </div>
                 </div>
 
-                {/* Text */}
                 <textarea
                   value={reviewText}
                   onChange={(e) => setReviewText(e.target.value)}
                   placeholder="Напишите ваш отзыв..."
-                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg p-4 text-neutral-300 placeholder-neutral-500 focus:outline-none focus:border-accent/50 min-h-[120px]"
+                  className="m3-textarea w-full"
+                  style={{ minHeight: 120 }}
                 />
 
                 <button
                   onClick={submitReview}
                   disabled={isSubmittingReview || (!reviewText.trim() && !reviewRating)}
-                  className="mt-4 px-6 py-2 bg-accent hover:bg-accent-hover text-black font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  className="m3-btn m3-btn-filled mt-4"
                 >
                   <Send className="w-4 h-4" />
                   {isSubmittingReview ? "Отправка..." : "Опубликовать отзыв"}
                 </button>
               </div>
             ) : !user ? (
-              <div className="bg-neutral-900/30 rounded-lg p-6 mb-8 text-center">
-                <p className="text-neutral-400 mb-4">Войдите чтобы оставить отзыв</p>
-                <GoogleLogin
-                  onSuccess={handleGoogleSignIn}
-                  onError={() => alert("Ошибка входа")}
-                  text="signin_with"
-                  theme="filled_black"
-                  size="medium"
-                  width={150}
-                />
+              <div className="m3-card mb-6 text-center">
+                <p className="m3-body-medium m3-text-secondary mb-4">Войдите чтобы оставить отзыв</p>
+                <div className="flex justify-center">
+                  <GoogleSignInButton onSuccess={handleGoogleSignIn} variant="wide" />
+                </div>
               </div>
             ) : null}
 
-            {/* Other Reviews List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {reviews.length === 0 ? (
                 userReview?.hasData ? null : (
-                  <div className="text-neutral-500 text-center py-8">
+                  <div
+                    className="text-center py-10 m3-body-medium m3-text-secondary"
+                    style={{
+                      background: "var(--m3-surface-container-low)",
+                      borderRadius: "var(--m3-radius-lg)",
+                    }}
+                  >
                     Отзывов пока нет
                   </div>
                 )
               ) : (
                 reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="bg-neutral-900/30 rounded-lg p-6"
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        {/* Avatar */}
-                        {review.author_avatar_url ? (
-                          <img
-                            src={review.author_avatar_url}
-                            alt={review.author_name || "User"}
-                            className="w-10 h-10 rounded-full object-cover flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 font-bold flex-shrink-0">
-                            {getInitials(review.author_name)}
-                          </div>
-                        )}
-                        
-                        {/* Content */}
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <div className="font-medium">{review.author_name || "Аноним"}</div>
-                              <div className="text-xs text-neutral-500">
-                                {new Date(review.created_at).toLocaleDateString("ru-RU", {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </div>
+                  <div key={review.id} className="m3-card">
+                    <div className="flex items-start gap-3">
+                      {review.author_avatar_url ? (
+                        <img
+                          src={review.author_avatar_url}
+                          referrerPolicy="no-referrer"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                          alt={review.author_name || "User"}
+                          className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                        />
+                      ) : (
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+                          style={{
+                            background: "var(--m3-surface-container-high)",
+                            color: "var(--m3-on-surface-variant)",
+                          }}
+                        >
+                          {getInitials(review.author_name)}
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-1">
+                          <div className="min-w-0">
+                            <div className="m3-title-small truncate">{review.author_name || "Аноним"}</div>
+                            <div className="m3-body-small m3-text-secondary">
+                              {new Date(review.created_at).toLocaleDateString("ru-RU", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
                             </div>
-                            {review.rating && review.rating > 0 && (
-                              <div className="flex gap-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star
-                                    key={star}
-                                    className={`w-4 h-4 ${
-                                      review.rating && star <= review.rating
-                                        ? "fill-accent text-accent"
-                                        : "text-neutral-600"
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            )}
                           </div>
-                          {review.text_content && (
-                            <p className="text-neutral-300 leading-relaxed mt-2">
-                              {review.text_content}
-                            </p>
+                          {review.rating && review.rating > 0 && (
+                            <div className="flex gap-0.5 flex-shrink-0">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className="w-4 h-4"
+                                  style={{
+                                    color: review.rating && star <= review.rating
+                                      ? "var(--m3-primary)"
+                                      : "var(--m3-outline)",
+                                    fill: review.rating && star <= review.rating ? "currentColor" : "transparent",
+                                  }}
+                                />
+                              ))}
+                            </div>
                           )}
                         </div>
+                        {review.text_content && (
+                          <p className="m3-body-medium mt-2" style={{ color: "var(--m3-on-surface-variant)", lineHeight: 1.6 }}>
+                            {review.text_content}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  ))
+                  </div>
+                ))
               )}
             </div>
           </div>
         </div>
       </main>
 
-      {/* QR Code Modal */}
-      {showQRCode && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={handleCloseQR}>
-          <div className="bg-neutral-900 rounded-lg p-8 max-w-sm mx-4 border border-neutral-800" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-medium">Открыть в приложении</h3>
-              <button
-                onClick={handleCloseQR}
-                className="p-2 text-neutral-400 hover:text-foreground transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="bg-white p-4 rounded-lg mb-6">
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${API_URL}/share/quest/${questId}`)}`}
-                alt="QR Code"
-                className="w-full h-auto"
-              />
-            </div>
-            
-            <p className="text-neutral-400 text-sm text-center mb-4">
-              Отсканируйте QR-код чтобы открыть квест в приложении Meander
-            </p>
-            
-            <button
-              onClick={handleCloseQR}
-              className="w-full px-6 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-300"
-            >
-              Закрыть
-            </button>
-          </div>
-        </div>
-      )}
-
       <Footer />
     </div>
   );
 }
 
-// Header Component
+function StatCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <div
+      className="p-4 text-center"
+      style={{
+        background: "var(--m3-surface-container-low)",
+        borderRadius: "var(--m3-radius-md)",
+      }}
+    >
+      <div className="flex items-center justify-center m3-text-secondary mb-1">
+        {icon}
+      </div>
+      <div className="m3-headline-small">{value}</div>
+      <div className="m3-body-small m3-text-secondary">{label}</div>
+    </div>
+  );
+}
+
 function Header({
   user,
   onSignIn,
   onSignOut,
+  title,
 }: {
   user: UserProfile | null;
   onSignIn: (response: CredentialResponse) => void;
   onSignOut: () => void;
+  title?: string;
 }) {
+
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-3">
-          <img
-            src="/images/лого свг без фона.svg"
-            alt="Meander"
-            className="h-8 w-auto"
-          />
+    <header className="m3-top-app-bar">
+      <div className="m3-top-app-bar-inner">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = "/market";
+            }
+          }}
+          className="m3-back-button"
+          aria-label="Назад"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <Link href="/" className="m3-logo m3-logo-link">
+          <img src="/images/logo.svg" alt="Meander" className="h-7 md:h-8 w-auto" />
         </Link>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/market"
-            className="text-sm text-neutral-400 hover:text-accent transition-colors"
-          >
-            Маркет
-          </Link>
+        {title && <span className="m3-header-title-mobile">{title}</span>}
+
+        <div className="m3-header-end">
           {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-3">
-                {user.avatar_url ? (
-                  <Link href={`/profile/${user.id}`}>
-                    <img
-                      src={user.avatar_url}
-                      alt={user.full_name || ""}
-                      className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-accent transition-all"
-                    />
-                  </Link>
-                ) : (
-                  <Link href={`/profile/${user.id}`}>
-                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 font-bold hover:ring-2 hover:ring-accent transition-all">
-                      {getInitials(user.full_name)}
-                    </div>
-                  </Link>
-                )}
-                <Link
-                  href={`/profile/${user.id}`}
-                  className="text-sm text-neutral-300 hover:text-accent transition-colors"
+            <Link href={`/profile/${user.id}`} className="flex items-center gap-2 m3-header-user">
+              {user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name || ""}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+                  style={{
+                    background: "var(--m3-surface-container-high)",
+                    color: "var(--m3-on-surface-variant)",
+                    fontSize: 12,
+                  }}
                 >
-                  {user.full_name}
-                </Link>
-                {user.is_verified && (
-                  <CheckCircle className="w-4 h-4 text-accent" />
-                )}
-              </div>
-              <button
-                onClick={onSignOut}
-                className="p-2 text-neutral-400 hover:text-accent transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
+                  {getInitials(user.full_name)}
+                </div>
+              )}
+              <span className="hidden sm:inline m3-body-medium">{user.full_name}</span>
+              {user.is_verified && (
+                <CheckCircle className="w-4 h-4" style={{ color: "var(--m3-primary)" }} />
+              )}
+            </Link>
           ) : (
-            <GoogleLogin
-              onSuccess={onSignIn}
-              onError={() => alert("Ошибка входа через Google")}
-              text="signin_with"
-              theme="filled_black"
-              size="medium"
-              width={120}
-            />
+            <GoogleSignInButton onSuccess={onSignIn} />
+          )}
+
+          {user && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="m3-icon-button"
+              aria-label="Выйти"
+              title="Выйти"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           )}
         </div>
-      </nav>
-    </header>
-  );
-}
 
-// Footer Component
-function Footer() {
-  return (
-    <footer className="py-8 px-6 border-t border-neutral-900">
-      <div className="max-w-7xl mx-auto text-center text-neutral-600 text-sm">
-        <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
+        <nav className="m3-nav-desktop">
+          <Link href="/market" style={{ color: "var(--m3-primary)" }}>Маркет</Link>
+        </nav>
       </div>
-    </footer>
+    </header>
   );
 }

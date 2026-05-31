@@ -1,12 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import Footer from "@/components/Footer";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { CredentialResponse } from "@react-oauth/google";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 import {
   Download,
   Heart,
+  HeartHandshake,
   Clock,
   User,
   LogOut,
@@ -17,9 +20,15 @@ import {
   TrendingUp,
   Diamond,
   FlaskConical,
+  ChevronRight,
+  Menu,
+  X,
 } from "lucide-react";
+import HeroCarousel, { CarouselQuest } from "@/components/HeroCarousel";
+import PartnerCarousel from "@/components/PartnerCarousel";
+import QuestCover from "@/components/QuestCover";
 
-const API_URL = "https://backend.meander.sbs";
+const API_URL = "/api/be";
 
 interface Quest {
   id: string;
@@ -79,7 +88,10 @@ export default function MarketPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [displayCount, setDisplayCount] = useState(24);
 
   useEffect(() => {
     const savedUser = localStorage.getItem("meander_user");
@@ -93,21 +105,54 @@ export default function MarketPage() {
     loadQuests();
   }, []);
 
+  useEffect(() => {
+    if (drawerOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [drawerOpen]);
+
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setDisplayCount(24);
+  }, [debouncedSearch, selectedCategory]);
+
   const getTokenHeaders = () => {
     const token = localStorage.getItem("meander_token");
     return token ? { Authorization: `Bearer ${token}` } : {};
   };
 
-  const loadQuests = async () => {
+  const loadQuests = async (attempt = 0) => {
     try {
       setLoading(true);
       setError(null);
-
       const response = await axios.get(`${API_URL}/quests`, { headers: getTokenHeaders() });
       setAllQuests(response.data);
     } catch (err: any) {
       console.error("Failed to load quests:", err);
-      setError(err.message || "Не удалось загрузить квесты");
+      const status = err?.response?.status;
+      if (status === 429 && attempt < 3) {
+        const retryAfter = Number(err?.response?.headers?.["retry-after"]);
+        const delay = (Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1500 * Math.pow(2, attempt));
+        setError(`Слишком много запросов. Повторим через ${Math.ceil(delay / 1000)} с…`);
+        setTimeout(() => loadQuests(attempt + 1), delay);
+        return;
+      }
+      if (status === 429) {
+        setError("Сервер перегружен, попробуй обновить страницу через минуту");
+      } else {
+        setError(err?.response?.data?.error || err?.message || "Не удалось загрузить квесты");
+      }
     } finally {
       setLoading(false);
     }
@@ -116,11 +161,9 @@ export default function MarketPage() {
   const handleGoogleSignIn = async (credentialResponse: CredentialResponse) => {
     try {
       if (!credentialResponse.credential) return;
-
       const response = await axios.post(`${API_URL}/auth/google/token`, {
         idToken: credentialResponse.credential,
       });
-
       const { token, user } = response.data;
       localStorage.setItem("meander_token", token);
       localStorage.setItem("meander_user", JSON.stringify(user));
@@ -146,9 +189,27 @@ export default function MarketPage() {
           { headers: getTokenHeaders() }
         );
       }
-      window.open(`${API_URL}/quests/${questId}/file`, "_blank");
+      const found = quests.find((q) => q.id === questId);
+      const safeTitle = (found?.title || "quest")
+        .replace(/[\\/:*?"<>|]+/g, "")
+        .trim() || "quest";
+      const filename = `${safeTitle}.mnd`;
+      const res = await axios.get(`${API_URL}/quests/${questId}/file`, {
+        headers: getTokenHeaders(),
+        responseType: "blob",
+      });
+      const blob = new Blob([res.data], { type: "application/octet-stream" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download error:", err);
+      alert("Не удалось скачать квест");
     }
   };
 
@@ -160,10 +221,9 @@ export default function MarketPage() {
     try {
       await axios.post(
         `${API_URL}/quests/${questId}/vote`,
-        { action: 'set', is_like: isLike },
+        { action: "set", is_like: isLike },
         { headers: getTokenHeaders() }
       );
-      // Перезагружаем все квесты для обновления счётчиков
       await loadQuests();
     } catch (err: any) {
       console.error("Vote error:", err);
@@ -171,223 +231,268 @@ export default function MarketPage() {
     }
   };
 
-  // Фильтрация и сортировка
   const getFilteredQuests = (questList: Quest[], category: string | null) => {
     let filtered = [...questList];
-
     if (category === "verified") {
-      return filtered.filter(q => q.author_is_verified);
+      return filtered.filter((q) => q.author_is_verified);
     }
     if (category === "trending") {
-      return filtered.sort((a, b) => {
-        const scoreA = a.downloads_count + (a.like_count * 5);
-        const scoreB = b.downloads_count + (b.like_count * 5);
-        return scoreB - scoreA;
-      }).slice(0, 10);
+      return filtered
+        .sort((a, b) => {
+          const scoreA = a.downloads_count + a.like_count * 5;
+          const scoreB = b.downloads_count + b.like_count * 5;
+          return scoreB - scoreA;
+        })
+        .slice(0, 10);
     }
     if (category) {
-      filtered = filtered.filter(q => 
-        q.genres.includes(category) || q.category === category
+      filtered = filtered.filter(
+        (q) => q.genres.includes(category) || q.category === category
       );
     }
-
     return filtered;
   };
 
-  const filteredQuests = getFilteredQuests(
-    searchQuery 
-      ? allQuests.filter(q => 
-          q.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          q.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredQuests = useMemo(() => {
+    const query = debouncedSearch.toLowerCase();
+    const base = query
+      ? allQuests.filter(
+          (q) =>
+            q.title.toLowerCase().includes(query) ||
+            q.description?.toLowerCase().includes(query)
         )
-      : allQuests,
-    selectedCategory
+      : allQuests;
+    return getFilteredQuests(base, selectedCategory);
+  }, [allQuests, debouncedSearch, selectedCategory]);
+
+  const visibleQuests = useMemo(
+    () => filteredQuests.slice(0, displayCount),
+    [filteredQuests, displayCount]
   );
 
-  const newQuests = allQuests
-    .filter(q => !q.is_demo)
-    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
-    .slice(0, 10);
+  const newQuests = useMemo(
+    () =>
+      allQuests
+        .filter((q) => !q.is_demo)
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+        .slice(0, 10),
+    [allQuests]
+  );
 
-  const popularQuests = allQuests
-    .filter(q => !q.is_demo)
-    .sort((a, b) => {
-      const scoreA = a.downloads_count + (a.like_count * 5);
-      const scoreB = b.downloads_count + (b.like_count * 5);
-      return scoreB - scoreA;
-    })
-    .slice(0, 10);
+  const popularQuests = useMemo(
+    () =>
+      allQuests
+        .filter((q) => !q.is_demo)
+        .sort((a, b) => {
+          const scoreA = a.downloads_count + a.like_count * 5;
+          const scoreB = b.downloads_count + b.like_count * 5;
+          return scoreB - scoreA;
+        })
+        .slice(0, 10),
+    [allQuests]
+  );
 
-  const verifiedQuests = allQuests
-    .filter(q => q.author_is_verified && !q.is_demo);
+  const undiscoveredQuests = useMemo(() => {
+    const pool = allQuests.filter((q) => q.downloads_count < 100 && !q.is_demo);
+    const shuffled = [...pool];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, 10);
+  }, [allQuests]);
 
-  const undiscoveredQuests = allQuests
-    .filter(q => q.downloads_count < 100 && !q.is_demo)
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 10);
+  const demoQuests = useMemo(() => allQuests.filter((q) => q.is_demo), [allQuests]);
 
-  const demoQuests = allQuests.filter(q => q.is_demo);
+  const featuredQuests = useMemo(
+    () => allQuests.filter((q) => q.is_featured).slice(0, 5),
+    [allQuests]
+  );
 
-  const featuredQuests = allQuests
-    .filter(q => q.is_featured)
-    .slice(0, 5);
+  const isSearchPending = searchQuery !== debouncedSearch;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onSignIn={handleGoogleSignIn} onSignOut={handleSignOut} />
+    <div className="min-h-screen m3-surface">
+      <Header
+        user={user}
+        onSignIn={handleGoogleSignIn}
+        onSignOut={handleSignOut}
+        onOpenDrawer={() => setDrawerOpen(true)}
+      />
 
-      <main className="pt-24 pb-24 px-6">
+      <MobileDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        user={user}
+        onSignIn={handleGoogleSignIn}
+        onSignOut={handleSignOut}
+      />
+
+      <main className="pt-6 pb-24 px-4 md:px-6">
         <div className="max-w-7xl mx-auto">
-          {/* Search Bar */}
-          <div className="mb-8">
-            <div className="relative max-w-2xl">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-500" />
+          <div className="mb-6 md:mb-8">
+            <div className="m3-market-search">
+              <Search className="m3-search-icon w-5 h-5" />
               <input
                 type="text"
                 placeholder="Найти историю..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-12 pr-10 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-foreground placeholder-neutral-500 focus:outline-none focus:border-accent/50"
+                className="m3-search-input"
               />
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-foreground"
+                  className="m3-icon-button m3-search-clear"
+                  aria-label="Очистить"
                 >
-                  <span className="text-lg">×</span>
+                  <X className="w-4 h-4" />
                 </button>
               )}
             </div>
           </div>
 
-          {/* Categories */}
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
-            {categories.map((cat) => (
-              <button
-                key={cat.key ?? "all"}
-                onClick={() => setSelectedCategory(cat.key)}
-                className={`px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${
-                  selectedCategory === cat.key
-                    ? "bg-accent text-black"
-                    : "bg-neutral-900 text-neutral-400 hover:text-foreground"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
+          <div
+            className="m3-collapsible"
+            data-collapsed={searchQuery ? "true" : "false"}
+            aria-hidden={searchQuery ? "true" : "false"}
+          >
+            <div className="m3-collapsible-inner">
+              <div className="mb-6 md:mb-8">
+                <PartnerCarousel />
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-4 mb-6 md:mb-8 scrollbar-hide">
+                {categories.map((cat) => (
+                  <button
+                    key={cat.key ?? "all"}
+                    onClick={() => setSelectedCategory(cat.key)}
+                    className={`m3-chip${selectedCategory === cat.key ? " is-selected" : ""}`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {error && (
-            <div className="mb-8 p-4 bg-red-900/20 border border-red-900 rounded-lg text-red-400 text-center">
+            <div
+              className="mb-8 p-4 text-center"
+              style={{
+                background: "var(--m3-error-container)",
+                color: "var(--m3-on-error-container)",
+                borderRadius: "var(--m3-radius-md)",
+              }}
+            >
               {error}
             </div>
           )}
 
           {!searchQuery && !selectedCategory && (
             <>
-              {/* Editor's Choice */}
               {featuredQuests.length > 0 && (
-                <section className="mb-12">
-                  <SectionHeader 
-                    icon={<Sparkles className="w-5 h-5" />} 
-                    title="Выбор редакции" 
+                <section className="mb-10 md:mb-14">
+                  <SectionHeader
+                    icon={<Sparkles className="w-5 h-5" />}
+                    title="Выбор редакции"
                   />
-                  <HorizontalQuestList 
-                    quests={featuredQuests}
-                    onDownload={handleDownload}
-                    onVote={handleVote}
-                  />
+                  <HeroCarousel quests={toCarouselQuests(featuredQuests)} />
                 </section>
               )}
 
-              {/* Undiscovered Gems */}
-              <section className="mb-12">
-                <SectionHeader 
-                  icon={<Diamond className="w-5 h-5" />} 
-                  title="Скрытые алмазы"
-                  subtitle="Попробуй что-то новое от начинающих авторов"
-                />
-                <HorizontalQuestList 
-                  quests={undiscoveredQuests}
-                  onDownload={handleDownload}
-                  onVote={handleVote}
-                />
-              </section>
+              {undiscoveredQuests.length > 0 && (
+                <section className="mb-10 md:mb-14">
+                  <SectionHeader
+                    icon={<Diamond className="w-5 h-5" />}
+                    title="Скрытые алмазы"
+                    subtitle="Попробуй что-то новое от начинающих авторов"
+                  />
+                  <HeroCarousel quests={toCarouselQuests(undiscoveredQuests)} />
+                </section>
+              )}
 
-              {/* Trending */}
-              <section className="mb-12">
-                <SectionHeader 
-                  icon={<TrendingUp className="w-5 h-5" />} 
-                  title="В тренде" 
-                />
-                <HorizontalQuestList 
-                  quests={popularQuests}
-                  onDownload={handleDownload}
-                  onVote={handleVote}
-                />
-              </section>
+              {popularQuests.length > 0 && (
+                <section className="mb-10 md:mb-14">
+                  <SectionHeader
+                    icon={<TrendingUp className="w-5 h-5" />}
+                    title="В тренде"
+                  />
+                  <HeroCarousel quests={toCarouselQuests(popularQuests)} />
+                </section>
+              )}
 
-              {/* New Releases */}
-              <section className="mb-12">
-                <SectionHeader 
-                  icon={<Star className="w-5 h-5" />} 
-                  title="Библиотека новинок" 
-                />
-                <QuestGrid 
-                  quests={newQuests}
-                  onDownload={handleDownload}
-                  onVote={handleVote}
-                />
-              </section>
+              {newQuests.length > 0 && (
+                <section className="mb-10 md:mb-14">
+                  <SectionHeader
+                    icon={<Star className="w-5 h-5" />}
+                    title="Свежие новинки"
+                    subtitle="Что недавно появилось на маркете"
+                  />
+                  <HeroCarousel quests={toCarouselQuests(newQuests)} />
+                </section>
+              )}
 
-              {/* Demo Versions */}
               {demoQuests.length > 0 && (
-                <section className="mb-12">
-                  <SectionHeader 
-                    icon={<FlaskConical className="w-5 h-5" />} 
+                <section className="mb-10 md:mb-14">
+                  <SectionHeader
+                    icon={<FlaskConical className="w-5 h-5" />}
                     title="Демо версии"
                     subtitle="Недоделанные квесты. Секция для тестов и отзывов."
                   />
-                  <HorizontalQuestList 
-                    quests={demoQuests.slice(0, 10)}
-                    onDownload={handleDownload}
-                    onVote={handleVote}
-                  />
+                  <HeroCarousel quests={toCarouselQuests(demoQuests.slice(0, 10))} />
                 </section>
               )}
             </>
           )}
 
-          {/* Search Results / Category Filter */}
-          {(searchQuery || selectedCategory) && (
+          {(debouncedSearch || selectedCategory) && (
             <section className="mb-12">
-              <SectionHeader 
-                icon={<Search className="w-5 h-5" />} 
+              <SectionHeader
+                icon={<Search className="w-5 h-5" />}
                 title={
-                  searchQuery 
-                    ? `Результаты поиска: "${searchQuery}"`
-                    : categories.find(c => c.key === selectedCategory)?.label || "Фильтр"
+                  debouncedSearch
+                    ? `Результаты поиска: "${debouncedSearch}"`
+                    : categories.find((c) => c.key === selectedCategory)?.label ||
+                      "Фильтр"
                 }
               />
-              <QuestGrid 
-                quests={filteredQuests}
+              <QuestGrid
+                quests={visibleQuests}
                 onDownload={handleDownload}
                 onVote={handleVote}
               />
+              {filteredQuests.length > visibleQuests.length && (
+                <div className="flex justify-center mt-8">
+                  <button
+                    onClick={() => setDisplayCount((c) => c + 24)}
+                    className="m3-button-outlined"
+                  >
+                    Показать ещё ({filteredQuests.length - visibleQuests.length})
+                  </button>
+                </div>
+              )}
             </section>
           )}
 
-          {loading && (
+          {(loading || isSearchPending) && (
             <div className="text-center py-20">
-              <div className="text-neutral-500">Загрузка квестов...</div>
+              <div className="m3-body-medium m3-text-secondary">
+                {loading ? "Загрузка квестов..." : "Поиск..."}
+              </div>
             </div>
           )}
 
-          {!loading && filteredQuests.length === 0 && (searchQuery || selectedCategory) && (
-            <div className="text-center py-20">
-              <div className="text-neutral-500">Квесты не найдены</div>
-            </div>
-          )}
+          {!loading &&
+            !isSearchPending &&
+            filteredQuests.length === 0 &&
+            (debouncedSearch || selectedCategory) && (
+              <div className="text-center py-20">
+                <div className="m3-body-medium m3-text-secondary">
+                  Квесты не найдены
+                </div>
+              </div>
+            )}
         </div>
       </main>
 
@@ -396,188 +501,143 @@ export default function MarketPage() {
   );
 }
 
-// Section Header Component
-function SectionHeader({ 
-  icon, 
-  title, 
-  subtitle 
-}: { 
-  icon: React.ReactNode; 
-  title: string; 
+function toCarouselQuests(quests: Quest[]): CarouselQuest[] {
+  return quests.map((q) => ({
+    id: q.id,
+    title: q.title,
+    preview_image_url: q.preview_image_url,
+    author_name: q.author_name,
+    author_is_verified: q.author_is_verified,
+    is_demo: q.is_demo,
+    downloads_count: q.downloads_count,
+    average_rating: q.average_rating,
+    estimated_playtime: q.estimated_playtime,
+  }));
+}
+
+function SectionHeader({
+  icon,
+  title,
+  subtitle,
+}: {
+  icon: React.ReactNode;
+  title: string;
   subtitle?: string;
 }) {
   return (
-    <div className="mb-6">
-      <div className="flex items-center gap-3 mb-2">
-        <span className="text-accent">{icon}</span>
-        <h2 className="text-xl font-medium">{title}</h2>
+    <div className="mb-5 md:mb-6 px-1">
+      <div className="flex items-center gap-3 mb-1.5">
+        <span style={{ color: "var(--m3-primary)" }}>{icon}</span>
+        <h2 className="m3-headline-small md:m3-headline-medium">{title}</h2>
       </div>
       {subtitle && (
-        <p className="text-neutral-500 text-sm">{subtitle}</p>
+        <p className="m3-body-small m3-text-secondary ml-8">{subtitle}</p>
       )}
     </div>
   );
 }
 
-// Horizontal Quest List (for featured sections)
-function HorizontalQuestList({ 
-  quests, 
-  onDownload, 
-  onVote 
-}: { 
-  quests: Quest[]; 
-  onDownload: (id: string) => void;
-  onVote: (id: string, isLike: boolean) => void;
-}) {
-  return (
-    <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-      {quests.map((quest) => (
-        <QuestCard 
-          key={quest.id} 
-          quest={quest} 
-          compact 
-          onDownload={() => onDownload(quest.id)}
-          onVote={(isLike) => onVote(quest.id, isLike)}
-        />
-      ))}
-    </div>
-  );
-}
-
-// Quest Grid
-function QuestGrid({ 
-  quests, 
-  onDownload, 
-  onVote 
-}: { 
-  quests: Quest[]; 
-  onDownload: (id: string) => void;
-  onVote: (id: string, isLike: boolean) => void;
-}) {
-  return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {quests.map((quest) => (
-        <QuestCard 
-          key={quest.id} 
-          quest={quest} 
-          onDownload={() => onDownload(quest.id)}
-          onVote={(isLike) => onVote(quest.id, isLike)}
-        />
-      ))}
-    </div>
-  );
-}
-
-// Quest Card Component
-function QuestCard({ 
-  quest, 
-  compact = false,
+function QuestGrid({
+  quests,
   onDownload,
   onVote,
-}: { 
-  quest: Quest; 
-  compact?: boolean;
+}: {
+  quests: Quest[];
+  onDownload: (id: string) => void;
+  onVote: (id: string, isLike: boolean) => void;
+}) {
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      {quests.map((quest) => (
+        <QuestCard
+          key={quest.id}
+          quest={quest}
+          onDownload={() => onDownload(quest.id)}
+          onVote={(isLike) => onVote(quest.id, isLike)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function QuestCard({
+  quest,
+  onDownload,
+}: {
+  quest: Quest;
   onDownload: () => void;
   onVote: (isLike: boolean) => void;
 }) {
   return (
-    <div
-      className={`bg-neutral-900/50 rounded-lg overflow-hidden border border-neutral-900 hover:border-accent/30 transition-colors ${
-        compact ? "min-w-[160px] w-[160px]" : ""
-      }`}
-    >
-      {/* Cover Image */}
-      <Link
-        href={`/market/${quest.id}`}
-        className={`block bg-neutral-950 ${compact ? "aspect-[3/4]" : "aspect-video"}`}
-      >
-        {quest.preview_image_url ? (
-          <img
-            src={quest.preview_image_url}
-            alt={quest.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-neutral-600 text-4xl">
-            🎮
+    <div className="m3-quest-card">
+      <Link href={`/market/${quest.id}`} className="m3-quest-card-media block">
+        <QuestCover
+          src={quest.preview_image_url}
+          alt={quest.title}
+          className="m3-quest-card-cover"
+        />
+        {quest.is_demo && (
+          <div className="m3-quest-card-demo">
+            <span className="m3-badge m3-badge-primary">Демо</span>
           </div>
         )}
       </Link>
 
-      {/* Content */}
-      <div className={`p-4 ${compact ? "space-y-2" : "space-y-3"}`}>
-        <Link
-          href={`/market/${quest.id}`}
-          className="block"
-        >
-          <div className="flex items-start justify-between">
-            <h3 className={`font-medium line-clamp-1 ${compact ? "text-sm" : ""}`}>
-              {quest.title}
-            </h3>
-            {quest.is_demo && (
-              <span className="px-2 py-0.5 bg-accent/20 text-accent text-xs rounded">
-                Демо
-              </span>
-            )}
-          </div>
+      <div className="m3-quest-card-body">
+        <Link href={`/market/${quest.id}`} className="block">
+          <h3 className="m3-quest-card-title">{quest.title}</h3>
         </Link>
 
-        {!compact && (
-          <p className="text-neutral-400 text-sm line-clamp-2">
-            {quest.description}
-          </p>
-        )}
+        <p className="m3-quest-card-desc">{quest.description}</p>
 
-        {/* Author */}
-        <div className="flex items-center gap-2 text-sm">
-          <User className="w-3 h-3 text-neutral-500" />
+        <div className="m3-quest-card-author">
+          <User className="w-3.5 h-3.5" strokeWidth={1.5} />
           {quest.author_id ? (
             <span
               onClick={(e) => {
                 e.stopPropagation();
                 window.location.href = `/profile/${quest.author_id}`;
               }}
-              className="text-neutral-400 truncate hover:text-accent transition-colors cursor-pointer"
+              className="m3-quest-card-author-name truncate"
             >
               {quest.author_name || "Аноним"}
             </span>
           ) : (
-            <span className="text-neutral-400 truncate">
-              {quest.author_name || "Аноним"}
-            </span>
+            <span className="truncate">{quest.author_name || "Аноним"}</span>
           )}
           {quest.author_is_verified && (
-            <CheckCircle className="w-3 h-3 text-accent flex-shrink-0" />
+            <CheckCircle
+              className="w-3.5 h-3.5 flex-shrink-0"
+              style={{ color: "var(--m3-primary)" }}
+            />
           )}
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center gap-3 text-xs text-neutral-400">
-          <div className="flex items-center gap-1">
-            <Heart className="w-3 h-3" />
+        <div className="m3-quest-card-stats">
+          <span className="m3-quest-card-stat">
+            <Heart className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span>{quest.like_count}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Download className="w-3 h-3" />
+          </span>
+          <span className="m3-quest-card-stat">
+            <Download className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span>{quest.downloads_count}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="w-3 h-3" />
+          </span>
+          <span className="m3-quest-card-stat">
+            <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
             <span>{quest.estimated_playtime} мин</span>
-          </div>
+          </span>
         </div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        <div className="m3-quest-card-actions">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onDownload();
             }}
-            className="flex-1 px-3 py-2 bg-accent hover:bg-accent-hover text-black text-xs font-medium rounded transition-colors flex items-center justify-center gap-1"
+            className="m3-quest-card-download"
           >
-            <Download className="w-3 h-3" />
-            {!compact && "Скачать"}
+            <Download className="w-4 h-4" strokeWidth={2} />
+            <span>Скачать</span>
           </button>
         </div>
       </div>
@@ -585,95 +645,238 @@ function QuestCard({
   );
 }
 
-// Header Component
 function Header({
   user,
   onSignIn,
   onSignOut,
+  onOpenDrawer,
 }: {
   user: UserProfile | null;
   onSignIn: (response: CredentialResponse) => void;
   onSignOut: () => void;
+  onOpenDrawer: () => void;
 }) {
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-3">
+    <header className="m3-top-app-bar">
+      <div className="m3-top-app-bar-inner">
+        <button
+          onClick={onOpenDrawer}
+          className="m3-icon-button m3-mobile-only"
+          aria-label="Меню"
+        >
+          <Menu className="w-6 h-6" />
+        </button>
+
+        <Link href="/" className="m3-logo">
           <img
-            src="/images/лого свг без фона.svg"
+            src="/images/logo.svg"
             alt="Meander"
             className="h-8 w-auto"
           />
         </Link>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/"
-            className="text-sm text-neutral-400 hover:text-accent transition-colors"
-          >
-            На главную
-          </Link>
+
+        <div className="m3-desktop-only items-center gap-4" style={{ marginLeft: "auto" }}>
           {user ? (
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                {user.avatar_url ? (
-                  <Link href={`/profile/${user.id}`}>
-                    <img
-                      src={user.avatar_url}
-                      alt={user.full_name || ""}
-                      className="w-8 h-8 rounded-full object-cover hover:ring-2 hover:ring-accent transition-all"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = '';
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  </Link>
-                ) : (
-                  <Link href={`/profile/${user.id}`}>
-                    <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 hover:ring-2 hover:ring-accent transition-all">
-                      <User className="w-4 h-4" />
-                    </div>
-                  </Link>
-                )}
-                <Link
-                  href={`/profile/${user.id}`}
-                  className="text-sm text-neutral-300 hover:text-accent transition-colors"
-                >
-                  {user.full_name}
+            <div className="flex items-center gap-3">
+              {user.avatar_url ? (
+                <Link href={`/profile/${user.id}`}>
+                  <img
+                    src={user.avatar_url}
+                    alt={user.full_name || ""}
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    className="w-9 h-9 rounded-full object-cover"
+                    style={{ border: "2px solid transparent" }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--m3-primary)")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.borderColor = "transparent")
+                    }
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "";
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
                 </Link>
-                {user.is_verified && (
-                  <CheckCircle className="w-4 h-4 text-accent" />
-                )}
-              </div>
+              ) : (
+                <Link href={`/profile/${user.id}`}>
+                  <div
+                    className="w-9 h-9 rounded-full flex items-center justify-center"
+                    style={{
+                      background: "var(--m3-surface-container-high)",
+                      color: "var(--m3-on-surface-variant)",
+                    }}
+                  >
+                    <User className="w-4 h-4" />
+                  </div>
+                </Link>
+              )}
+              <Link
+                href={`/profile/${user.id}`}
+                className="m3-body-medium hover:underline"
+              >
+                {user.full_name}
+              </Link>
+              {user.is_verified && (
+                <CheckCircle
+                  className="w-4 h-4"
+                  style={{ color: "var(--m3-primary)" }}
+                />
+              )}
               <button
                 onClick={onSignOut}
-                className="p-2 text-neutral-400 hover:text-accent transition-colors"
+                className="m3-icon-button"
+                aria-label="Выйти"
               >
                 <LogOut className="w-5 h-5" />
               </button>
             </div>
           ) : (
-            <GoogleLogin
-              onSuccess={onSignIn}
-              onError={() => alert("Ошибка входа через Google")}
-              text="signin_with"
-              theme="filled_black"
-              size="medium"
-              width={120}
-            />
+            <GoogleSignInButton onSuccess={onSignIn} variant="wide" />
           )}
         </div>
-      </nav>
+
+        <div
+          className="m3-mobile-only items-center gap-2"
+          style={{ marginLeft: "auto" }}
+        >
+          {user && (
+            user.avatar_url ? (
+              <Link href={`/profile/${user.id}`}>
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name || ""}
+                  referrerPolicy="no-referrer"
+                  crossOrigin="anonymous"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  className="w-9 h-9 rounded-full object-cover"
+                />
+              </Link>
+            ) : (
+              <Link href={`/profile/${user.id}`}>
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center"
+                  style={{
+                    background: "var(--m3-surface-container-high)",
+                    color: "var(--m3-on-surface-variant)",
+                  }}
+                >
+                  <User className="w-4 h-4" />
+                </div>
+              </Link>
+            )
+          )}
+        </div>
+      </div>
     </header>
   );
 }
 
-// Footer Component
-function Footer() {
+function MobileDrawer({
+  open,
+  onClose,
+  user,
+  onSignIn,
+  onSignOut,
+}: {
+  open: boolean;
+  onClose: () => void;
+  user: UserProfile | null;
+  onSignIn: (response: CredentialResponse) => void;
+  onSignOut: () => void;
+}) {
+  const links = [
+    { href: "/", label: "Главная" },
+    { href: "/#features", label: "Возможности" },
+    { href: "/#download", label: "Скачать" },
+    { href: "/market", label: "Маркет" },
+    { href: "/branding", label: "Брендинг" },
+    { href: "/docs", label: "Документация" },
+    { href: "/#roadmap", label: "Roadmap" },
+  ];
+
   return (
-    <footer className="py-8 px-6 border-t border-neutral-900">
-      <div className="max-w-7xl mx-auto text-center text-neutral-600 text-sm">
-        <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
-      </div>
-    </footer>
+    <>
+      <div
+        className={`m3-drawer-scrim ${open ? "is-open" : ""}`}
+        onClick={onClose}
+        aria-hidden={!open}
+      />
+      <aside
+        className={`m3-drawer ${open ? "is-open" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Меню навигации"
+      >
+        <div className="m3-drawer-header">
+          <button
+            onClick={onClose}
+            className="m3-icon-button"
+            aria-label="Закрыть меню"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        <nav className="m3-drawer-list">
+          {links.slice(0, 4).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className="m3-drawer-item"
+            >
+              <span>{link.label}</span>
+            </Link>
+          ))}
+
+          <div
+            style={{
+              height: 1,
+              margin: "8px 16px",
+              background: "var(--m3-outline-variant)",
+            }}
+          />
+
+          {links.slice(4).map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={onClose}
+              className="m3-drawer-item"
+            >
+              <span>{link.label}</span>
+            </Link>
+          ))}
+
+          <div
+            style={{
+              height: 1,
+              margin: "8px 16px",
+              background: "var(--m3-outline-variant)",
+            }}
+          />
+          {user ? (
+            <button
+              onClick={() => {
+                onSignOut();
+                onClose();
+              }}
+              className="m3-drawer-item w-full text-left"
+              style={{ background: "transparent", border: "none" }}
+            >
+              <LogOut className="w-5 h-5 mr-2" style={{ color: "var(--m3-on-surface-variant)" }} />
+              <span>Выйти</span>
+            </button>
+          ) : (
+            <div className="m3-drawer-item" style={{ justifyContent: "center" }}>
+              <GoogleSignInButton onSuccess={(r) => { onSignIn(r); onClose(); }} />
+            </div>
+          )}
+        </nav>
+      </aside>
+    </>
   );
 }
