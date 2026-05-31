@@ -685,7 +685,6 @@ function Header({
                     alt={user.full_name || ""}
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     className="w-9 h-9 rounded-full object-cover"
                     style={{ border: "2px solid transparent" }}
                     onMouseEnter={(e) =>
@@ -695,7 +694,6 @@ function Header({
                       (e.currentTarget.style.borderColor = "transparent")
                     }
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "";
                       (e.target as HTMLImageElement).style.display = "none";
                     }}
                   />
