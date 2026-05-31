@@ -10,9 +10,7 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-// Препроцессинг MD контента
 function preprocessContent(content: string): string {
-  // Заменяем YouTube ссылки на специальный маркер
   const ytRegex = /https?:\/\/(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})[^\s]*/g;
   content = content.replace(ytRegex, (match) => {
     const videoId = match.match(/([a-zA-Z0-9_-]{11})/)?.[1];
@@ -22,11 +20,9 @@ function preprocessContent(content: string): string {
     return match;
   });
 
-  // Кодируем пути к изображениям с кириллицей
   content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (match, alt, src) => {
-    // Если путь относительный и содержит кириллицу — кодируем
-    if (!src.startsWith('http') && /[^\x00-\x7F]/.test(src)) {
-      const encoded = src.split('/').map((part: string) => encodeURIComponent(part)).join('/');
+    if (!src.startsWith("http") && /[^\x00-\x7F]/.test(src)) {
+      const encoded = src.split("/").map((part: string) => encodeURIComponent(part)).join("/");
       return `![${alt}](${encoded})`;
     }
     return match;
@@ -35,24 +31,19 @@ function preprocessContent(content: string): string {
   return content;
 }
 
-// Компонент для YouTube видео
 function YouTubeEmbed({ videoId }: { videoId: string }) {
   return (
-    <div className="my-6">
-      <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-neutral-800 bg-neutral-950">
-        <iframe
-          src={`https://www.youtube.com/embed/${videoId}`}
-          title="YouTube video"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="absolute inset-0 w-full h-full"
-        />
-      </div>
+    <div className="m3-md-video">
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}`}
+        title="YouTube video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+      />
     </div>
   );
 }
 
-// Компонент блока кода с кнопкой копирования
 function CodeBlock({ code, language }: { code: string; language?: string }) {
   const [copied, setCopied] = React.useState(false);
 
@@ -63,32 +54,26 @@ function CodeBlock({ code, language }: { code: string; language?: string }) {
   };
 
   return (
-    <div className="my-6 rounded-xl border border-neutral-800 overflow-hidden bg-neutral-950">
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-neutral-800">
-        <div className="flex items-center gap-2">
-          <div className="w-2.5 h-2.5 rounded-full bg-red-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/60" />
-          <div className="w-2.5 h-2.5 rounded-full bg-green-500/60" />
-          {language && (
-            <span className="ml-2 text-xs text-neutral-600 font-mono">{language}</span>
-          )}
+    <div className="m3-md-code">
+      <div className="m3-md-code-bar">
+        <div className="m3-md-code-dots">
+          <span style={{ background: "rgba(239,68,68,0.6)" }} />
+          <span style={{ background: "rgba(234,179,8,0.6)" }} />
+          <span style={{ background: "rgba(34,197,94,0.6)" }} />
+          {language && <span className="m3-md-code-lang">{language}</span>}
         </div>
-        <button
-          onClick={handleCopy}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs text-neutral-500 hover:text-foreground bg-neutral-900 hover:bg-neutral-800 rounded-md transition-colors"
-        >
-          {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+        <button onClick={handleCopy} className="m3-md-code-copy">
+          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
           {copied ? "Скопировано" : "Копировать"}
         </button>
       </div>
-      <pre className="p-4 md:p-5 overflow-x-auto">
-        <code className="text-sm text-neutral-300 font-mono whitespace-pre">{code}</code>
+      <pre className="m3-md-code-pre">
+        <code className="m3-md-code-code">{code}</code>
       </pre>
     </div>
   );
 }
 
-// Рекурсивное извлечение текста из React элементов
 function extractText(children: any): string {
   if (typeof children === "string") return children;
   if (Array.isArray(children)) {
@@ -100,70 +85,54 @@ function extractText(children: any): string {
   return String(children || "");
 }
 
+function slugify(text: string): string {
+  return text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
+}
+
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
   const processedContent = useMemo(() => preprocessContent(content), [content]);
 
   const components = {
-    // Заголовки с id для якорей
-    h1: ({ children, ...props }: any) => {
-      const text = extractText(children);
-      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
-      return (
-        <h1 id={id} className="text-2xl md:text-4xl font-light tracking-wider mt-8 md:mt-12 mb-4 md:mb-6" {...props}>
-          {children}
-        </h1>
-      );
-    },
-    h2: ({ children, ...props }: any) => {
-      const text = extractText(children);
-      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
-      return (
-        <h2 id={id} className="text-xl md:text-2xl font-light mt-8 md:mt-10 mb-3 md:mb-4" {...props}>
-          {children}
-        </h2>
-      );
-    },
-    h3: ({ children, ...props }: any) => {
-      const text = extractText(children);
-      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
-      return (
-        <h3 id={id} className="text-base md:text-lg font-medium mt-6 mb-2" {...props}>
-          {children}
-        </h3>
-      );
-    },
-    h4: ({ children, ...props }: any) => {
-      const text = extractText(children);
-      const id = text.toLowerCase().replace(/[^\w\sа-яё-]/gi, "").replace(/\s+/g, "-");
-      return (
-        <h4 id={id} className="text-sm md:text-base font-medium mt-4 mb-2" {...props}>
-          {children}
-        </h4>
-      );
-    },
+    h1: ({ children, ...props }: any) => (
+      <h1 id={slugify(extractText(children))} className="m3-md-h1" {...props}>
+        {children}
+      </h1>
+    ),
+    h2: ({ children, ...props }: any) => (
+      <h2 id={slugify(extractText(children))} className="m3-md-h2" {...props}>
+        {children}
+      </h2>
+    ),
+    h3: ({ children, ...props }: any) => (
+      <h3 id={slugify(extractText(children))} className="m3-md-h3" {...props}>
+        {children}
+      </h3>
+    ),
+    h4: ({ children, ...props }: any) => (
+      <h4 id={slugify(extractText(children))} className="m3-md-h4" {...props}>
+        {children}
+      </h4>
+    ),
 
-    // Параграфы с обработкой YouTube маркеров
     p: ({ children, ...props }: any) => {
       const text = extractText(children);
 
-      // Проверяем на YouTube маркер
       const ytMatch = text.match(/\[YOUTUBE:([a-zA-Z0-9_-]{11})\]/);
       if (ytMatch) {
         return <YouTubeEmbed videoId={ytMatch[1]} />;
       }
 
-      // Проверяем содержит ли текст YouTube маркер вместе с другим текстом
       const ytRegex = /\[YOUTUBE:([a-zA-Z0-9_-]{11})\]/g;
       const matches = [...text.matchAll(ytRegex)];
 
       if (matches.length > 0) {
         const cleanText = text.replace(ytRegex, "").trim();
-        const videoIds = matches.map(m => m[1]);
+        const videoIds = matches.map((m) => m[1]);
 
         return (
           <>
             {cleanText && (
-              <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
+              <p className="m3-md-p" {...props}>
                 {children}
               </p>
             )}
@@ -175,18 +144,17 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       }
 
       return (
-        <p className="text-neutral-400 text-sm md:text-base leading-relaxed mb-4" {...props}>
+        <p className="m3-md-p" {...props}>
           {children}
         </p>
       );
     },
 
-    // Ссылки
     a: ({ href, children, ...props }: any) => {
       const isExternal = href?.startsWith("http");
       if (href?.startsWith("/")) {
         return (
-          <Link href={href} className="text-accent hover:text-accent-hover transition-colors" {...props}>
+          <Link href={href} className="m3-md-link" {...props}>
             {children}
           </Link>
         );
@@ -196,7 +164,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-accent hover:text-accent-hover transition-colors inline-flex items-center gap-1"
+          className="m3-md-link m3-md-link-ext"
           {...props}
         >
           {children}
@@ -205,114 +173,80 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       );
     },
 
-    // Код
     code: ({ className, children, ...props }: any) => {
       const match = /language-(\w+)/.exec(className || "");
       const code = String(children).replace(/\n$/, "");
 
-      // Блочный код
       if (match || code.includes("\n")) {
         return <CodeBlock code={code} language={match?.[1]} />;
       }
 
-      // Инлайн код
       return (
-        <code className="px-1.5 py-0.5 bg-neutral-900 rounded text-accent text-xs font-mono" {...props}>
+        <code className="m3-md-inline-code" {...props}>
           {children}
         </code>
       );
     },
     pre: ({ children }: any) => <>{children}</>,
 
-    // Цитаты
     blockquote: ({ children, ...props }: any) => (
-      <blockquote
-        className="pl-4 md:pl-5 py-3 md:py-4 my-4 md:my-6 border-l-2 border-accent/40 bg-neutral-900/30 rounded-r-lg text-neutral-300 text-sm md:text-base"
-        {...props}
-      >
+      <blockquote className="m3-md-quote" {...props}>
         {children}
       </blockquote>
     ),
 
-    // Изображения
     img: ({ src, alt, ...props }: any) => (
-      <span className="block my-6 md:my-8">
-        <img
-          src={src}
-          alt={alt || ""}
-          className="max-w-full max-h-[70vh] w-auto h-auto rounded-xl border border-neutral-800 mx-auto block"
-          loading="lazy"
-          {...props}
-        />
-        {alt && (
-          <span className="block text-center text-xs text-neutral-600 mt-2 italic">
-            {alt}
-          </span>
-        )}
+      <span className="m3-md-img">
+        <img src={src} alt={alt || ""} loading="lazy" {...props} />
+        {alt && <span className="m3-md-img-caption">{alt}</span>}
       </span>
     ),
 
-    // Списки
     ul: ({ children, ...props }: any) => (
-      <ul className="list-disc list-inside space-y-1.5 mb-4 text-neutral-400 text-sm md:text-base" {...props}>
+      <ul className="m3-md-ul" {...props}>
         {children}
       </ul>
     ),
     ol: ({ children, ...props }: any) => (
-      <ol className="list-decimal list-inside space-y-1.5 mb-4 text-neutral-400 text-sm md:text-base" {...props}>
+      <ol className="m3-md-ol" {...props}>
         {children}
       </ol>
     ),
     li: ({ children, ...props }: any) => (
-      <li className="pl-1 leading-relaxed" {...props}>
+      <li className="m3-md-li" {...props}>
         {children}
       </li>
     ),
 
-    // Таблицы
     table: ({ children, ...props }: any) => (
-      <div className="my-6 overflow-x-auto rounded-lg border border-neutral-800">
-        <table className="w-full text-sm" {...props}>
+      <div className="m3-md-table-wrap">
+        <table className="m3-md-table" {...props}>
           {children}
         </table>
       </div>
     ),
-    thead: ({ children, ...props }: any) => (
-      <thead className="bg-neutral-900" {...props}>
-        {children}
-      </thead>
-    ),
-    th: ({ children, ...props }: any) => (
-      <th className="px-4 py-3 text-left text-neutral-300 font-medium border-b border-neutral-800" {...props}>
-        {children}
-      </th>
-    ),
-    td: ({ children, ...props }: any) => (
-      <td className="px-4 py-2.5 text-neutral-400 border-b border-neutral-800/50" {...props}>
-        {children}
-      </td>
-    ),
+    thead: ({ children, ...props }: any) => <thead {...props}>{children}</thead>,
+    tbody: ({ children, ...props }: any) => <tbody {...props}>{children}</tbody>,
+    tr: ({ children, ...props }: any) => <tr {...props}>{children}</tr>,
+    th: ({ children, ...props }: any) => <th {...props}>{children}</th>,
+    td: ({ children, ...props }: any) => <td {...props}>{children}</td>,
 
-    // Горизонтальная линия
-    hr: ({ ...props }: any) => (
-      <hr className="my-8 border-neutral-800" {...props} />
-    ),
+    hr: ({ ...props }: any) => <hr className="m3-md-hr" {...props} />,
 
-    // Жирный и курсив
     strong: ({ children, ...props }: any) => (
-      <strong className="text-neutral-200 font-medium" {...props}>
+      <strong className="m3-md-strong" {...props}>
         {children}
       </strong>
     ),
     em: ({ children, ...props }: any) => (
-      <em className="text-neutral-300 italic" {...props}>
+      <em className="m3-md-em" {...props}>
         {children}
       </em>
     ),
   };
 
   return (
-    <article className="prose-docs">
+    <article className="m3-md">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={components}

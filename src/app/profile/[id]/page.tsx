@@ -1,26 +1,31 @@
 "use client";
 
 import Link from "next/link";
+import Footer from "@/components/Footer";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import { CredentialResponse } from "@react-oauth/google";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import QuestCover from "@/components/QuestCover";
 import {
-  User,
   LogOut,
   CheckCircle,
-  Calendar,
   Star,
   Download,
   Heart,
-  MessageSquare,
-  Award,
   Share2,
-  ExternalLink,
-  Flag,
+  MoreVertical,
+  Users,
+  Grid3x3,
+  Library,
+  Zap,
+  ChevronRight,
+  Edit3,
+  ArrowLeft,
 } from "lucide-react";
 
-const API_URL = "https://backend.meander.sbs";
+const API_URL = "/api/be";
 
 interface UserProfile {
   id: string;
@@ -106,6 +111,26 @@ export default function ProfilePage() {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    function onEsc(e: KeyboardEvent) {
+      if (e.key === "Escape") setMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    document.addEventListener("keydown", onEsc);
+    return () => {
+      document.removeEventListener("mousedown", onDocClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [menuOpen]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"quests" | "reviews" | "achievements">("quests");
@@ -132,7 +157,6 @@ export default function ProfilePage() {
   }, [userId]);
 
   useEffect(() => {
-    // Загружаем статус подписки после загрузки currentUser
     if (userId && currentUser && currentUser.id !== userId) {
       loadFollowStatus();
     }
@@ -227,7 +251,6 @@ export default function ProfilePage() {
         { headers: getTokenHeaders() }
       );
       setIsFollowing(!isFollowing);
-      // Обновляем профиль для обновления счётчиков подписчиков
       await loadProfileData();
     } catch (err: any) {
       console.error("Follow error:", err);
@@ -243,11 +266,8 @@ export default function ProfilePage() {
     alert("Ссылка скопирована в буфер обмена");
   };
 
-  const handleReport = () => {
-    alert("Функция жалобы будет добавлена позже");
-  };
-
   const isOwnProfile = currentUser?.id === userId;
+  const totalLikes = quests.reduce((sum, q) => sum + (q.like_count || 0), 0);
 
   if (loading) {
     return (
@@ -264,12 +284,13 @@ export default function ProfilePage() {
           currentUser={currentUser}
           onSignIn={handleGoogleSignIn}
           onSignOut={handleSignOut}
+          title="Профиль не найден"
         />
         <div className="pt-32 px-6 max-w-4xl mx-auto">
           <div className="text-center py-20">
             <div className="text-neutral-400 mb-4">{error || "Профиль не найден"}</div>
             <Link href="/market" className="text-accent hover:underline">
-              ← Вернуться в маркет
+              Вернуться в маркет
             </Link>
           </div>
         </div>
@@ -277,201 +298,224 @@ export default function ProfilePage() {
     );
   }
 
+  const ProfileSidebar = (
+    <div className="w-full">
+      <div className="relative mb-14 sm:mb-16">
+        <div className="profile-banner relative w-full aspect-[16/8] sm:aspect-[16/7] lg:aspect-[20/8] rounded-3xl overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none">
+            <span className="absolute top-[20%] right-[15%] text-white/30 text-2xl">✦</span>
+            <span className="absolute top-[35%] right-[28%] text-white/20 text-xl">✦</span>
+            <span className="absolute top-[55%] right-[10%] text-white/25 text-lg">✦</span>
+            <span className="absolute top-[40%] right-[8%] w-12 h-3 rounded-full bg-white/10 blur-sm" />
+            <span className="absolute bottom-[20%] right-[20%] w-8 h-2 rounded-full bg-white/10 blur-sm" />
+          </div>
+
+          {profile.is_verified && (
+            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-full">
+              <CheckCircle className="w-4 h-4 text-accent" />
+              <span className="text-xs font-medium text-white">Проверенный</span>
+            </div>
+          )}
+        </div>
+
+        <div className="absolute -bottom-10 left-4 sm:left-5">
+          {profile.avatar_url ? (
+            <img
+              src={profile.avatar_url}
+              alt={profile.full_name || ""}
+              referrerPolicy="no-referrer"
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-background"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : (
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-400 text-2xl font-bold border-4 border-background">
+              {getInitials(profile.full_name)}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="px-1 mb-5">
+        <div className="flex items-center justify-between gap-3 mb-1">
+          <h2 className="text-xl sm:text-2xl font-semibold text-foreground truncate">
+            {profile.full_name || "Аноним"}
+          </h2>
+          <div className="hidden lg:block">
+            <ProfileMenu
+              menuOpen={menuOpen}
+              setMenuOpen={setMenuOpen}
+              menuRef={menuRef}
+              onShare={handleShare}
+            />
+          </div>
+        </div>
+        <p className="text-sm text-neutral-400">
+          С нами с {new Date(profile.created_at).toLocaleDateString("ru-RU", {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })}
+        </p>
+      </div>
+
+      {profile.bio && (
+        <div className="px-1 mb-5">
+          <div className="bg-[var(--m3-surface-container)] rounded-2xl px-5 py-4">
+            <p className="text-[15px] text-neutral-200 leading-relaxed whitespace-pre-wrap">
+              {profile.bio}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!isOwnProfile && (
+        <div className="px-1 mb-5">
+          <button
+            onClick={handleFollow}
+            disabled={followLoading}
+            className={`w-full py-3 rounded-full font-medium transition-colors ${
+              isFollowing
+                ? "bg-[var(--m3-surface-container)] hover:bg-[var(--m3-surface-container-high)] text-foreground"
+                : "bg-accent hover:bg-accent-hover text-black"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            {followLoading ? "Загрузка..." : isFollowing ? "Отписаться" : "Подписаться"}
+          </button>
+        </div>
+      )}
+
+      <div className="px-1 mb-5">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+          <StatTile
+            icon={<Grid3x3 className="w-5 h-5 text-neutral-300" />}
+            value={quests.length}
+            label="Квесты"
+          />
+          <StatTile
+            icon={<Heart className="w-5 h-5 text-neutral-300" />}
+            value={totalLikes}
+            label="Лайки"
+          />
+          <StatTile
+            icon={<Users className="w-5 h-5 text-neutral-300" />}
+            value={profile.followers_count}
+            label="Подписч."
+          />
+          <StatTile
+            icon={<Library className="w-5 h-5 text-neutral-300" />}
+            value={profile.following_count}
+            label="Подписки"
+          />
+        </div>
+      </div>
+
+      {profile.streak_count > 0 && (
+        <div className="px-1 mb-6">
+          <div className="flex items-center justify-between bg-[var(--m3-surface-container)] rounded-2xl px-5 py-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center">
+                <Zap className="w-5 h-5 text-accent" />
+              </div>
+              <div>
+                <div className="text-[15px] font-medium text-foreground">Серия активности</div>
+                <div className="text-xs text-neutral-400">{profile.streak_count} дней подряд</div>
+              </div>
+            </div>
+            <span className="text-2xl">🔥</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const TabsContent = (
+    <div className="w-full">
+      <div className="px-1 mb-5">
+        <div className="flex gap-2 overflow-x-auto no-scrollbar">
+          <TabChip
+            active={activeTab === "quests"}
+            onClick={() => setActiveTab("quests")}
+            icon={<Library className="w-4 h-4" />}
+            label="Публикации"
+          />
+          <TabChip
+            active={activeTab === "reviews"}
+            onClick={() => setActiveTab("reviews")}
+            icon={<Star className="w-4 h-4" />}
+            label="Отзывы"
+          />
+          <TabChip
+            active={activeTab === "achievements"}
+            onClick={() => setActiveTab("achievements")}
+            icon={<Zap className="w-4 h-4" />}
+            label="Достижения"
+          />
+        </div>
+      </div>
+
+      <div className="px-1">
+        {activeTab === "quests" && (
+          <div className="grid sm:grid-cols-2 gap-4">
+            {quests.length === 0 ? (
+              <div className="col-span-full text-center py-16 text-neutral-500">
+                У пользователя пока нет квестов
+              </div>
+            ) : (
+              quests.map((quest) => (
+                <QuestCard key={quest.id} quest={quest} />
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "reviews" && (
+          <div className="space-y-3">
+            {reviews.length === 0 ? (
+              <div className="text-center py-16 text-neutral-500">
+                У пользователя пока нет отзывов
+              </div>
+            ) : (
+              reviews.map((review) => (
+                <ReviewCard key={review.id} review={review} />
+              ))
+            )}
+          </div>
+        )}
+
+        {activeTab === "achievements" && (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {achievements.length === 0 ? (
+              <div className="col-span-full text-center py-16 text-neutral-500">
+                У пользователя пока нет достижений
+              </div>
+            ) : (
+              achievements.map((achievement) => (
+                <AchievementCard key={achievement.id} achievement={achievement} />
+              ))
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background">
       <Header
         currentUser={currentUser}
         onSignIn={handleGoogleSignIn}
         onSignOut={handleSignOut}
+        title={profile.full_name || "Профиль"}
       />
 
-      <main className="pt-24 pb-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          {/* Profile Header */}
-          <div className="bg-neutral-900/50 rounded-lg p-8 mb-8 border border-neutral-900">
-            <div className="flex flex-col md:flex-row gap-6 items-start">
-              {/* Avatar */}
-              <div className="flex-shrink-0">
-                {profile.avatar_url ? (
-                  <img
-                    src={profile.avatar_url}
-                    alt={profile.full_name || ""}
-                    className="w-32 h-32 rounded-full object-cover border-2 border-accent/30"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 text-4xl font-bold border-2 border-accent/30">
-                    {getInitials(profile.full_name)}
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="flex-1 space-y-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <h1 className="text-3xl font-light">{profile.full_name || "Аноним"}</h1>
-                      {profile.is_verified && (
-                        <CheckCircle className="w-6 h-6 text-accent" />
-                      )}
-                      {profile.role === 'admin' && (
-                        <span className="px-2 py-1 bg-red-900/30 text-red-400 text-xs rounded">
-                          Администратор
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2 text-neutral-400 text-sm">
-                      <Calendar className="w-4 h-4" />
-                      <span>
-                        На сайте с {new Date(profile.created_at).toLocaleDateString("ru-RU", {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex gap-3">
-                    <button
-                      onClick={handleShare}
-                      className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
-                    >
-                      <Share2 className="w-5 h-5" />
-                    </button>
-                    <button
-                      onClick={handleReport}
-                      className="p-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg transition-colors text-neutral-400"
-                    >
-                      <Flag className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bio */}
-                {profile.bio && (
-                  <p className="text-neutral-300 leading-relaxed">
-                    {profile.bio}
-                  </p>
-                )}
-
-                {/* Stats */}
-                <div className="flex gap-6 text-sm">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-light text-accent">{quests.length}</span>
-                    <span className="text-neutral-400">квестов</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-light text-accent">{profile.followers_count}</span>
-                    <span className="text-neutral-400">подписчиков</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl font-light text-accent">{profile.following_count}</span>
-                    <span className="text-neutral-400">подписок</span>
-                  </div>
-                  {profile.streak_count > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-light text-accent">🔥 {profile.streak_count}</span>
-                      <span className="text-neutral-400">дней подряд</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Follow Button */}
-                {!isOwnProfile && (
-                  <button
-                    onClick={handleFollow}
-                    disabled={followLoading}
-                    className={`px-6 py-2 rounded-lg font-medium transition-colors ${
-                      isFollowing
-                        ? "bg-neutral-800 hover:bg-neutral-700 text-neutral-300"
-                        : "bg-accent hover:bg-accent-hover text-black"
-                    } disabled:opacity-50 disabled:cursor-not-allowed`}
-                  >
-                    {followLoading ? "Загрузка..." : isFollowing ? "Отписаться" : "Подписаться"}
-                  </button>
-                )}
-              </div>
-            </div>
+      <main className="pt-6 pb-24 px-4 sm:px-6">
+        <div className="max-w-xl lg:max-w-6xl mx-auto lg:grid lg:grid-cols-[minmax(0,420px)_minmax(0,1fr)] lg:gap-8">
+          <div className="lg:self-start">
+            {ProfileSidebar}
           </div>
-
-          {/* Tabs */}
-          <div className="flex gap-2 mb-8 border-b border-neutral-900">
-            <button
-              onClick={() => setActiveTab("quests")}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === "quests"
-                  ? "text-accent border-b-2 border-accent"
-                  : "text-neutral-400 hover:text-foreground"
-              }`}
-            >
-              Квесты ({quests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("reviews")}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === "reviews"
-                  ? "text-accent border-b-2 border-accent"
-                  : "text-neutral-400 hover:text-foreground"
-              }`}
-            >
-              Отзывы ({reviews.length})
-            </button>
-            <button
-              onClick={() => setActiveTab("achievements")}
-              className={`px-6 py-3 font-medium transition-colors ${
-                activeTab === "achievements"
-                  ? "text-accent border-b-2 border-accent"
-                  : "text-neutral-400 hover:text-foreground"
-              }`}
-            >
-              Достижения ({achievements.length})
-            </button>
+          <div className="lg:pt-2">
+            {TabsContent}
           </div>
-
-          {/* Tab Content */}
-          {activeTab === "quests" && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {quests.length === 0 ? (
-                <div className="col-span-full text-center py-20 text-neutral-500">
-                  У пользователя пока нет квестов
-                </div>
-              ) : (
-                quests.map((quest) => (
-                  <QuestCard key={quest.id} quest={quest} />
-                ))
-              )}
-            </div>
-          )}
-
-          {activeTab === "reviews" && (
-            <div className="space-y-4">
-              {reviews.length === 0 ? (
-                <div className="text-center py-20 text-neutral-500">
-                  У пользователя пока нет отзывов
-                </div>
-              ) : (
-                reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))
-              )}
-            </div>
-          )}
-
-          {activeTab === "achievements" && (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {achievements.length === 0 ? (
-                <div className="col-span-full text-center py-20 text-neutral-500">
-                  У пользователя пока нет достижений
-                </div>
-              ) : (
-                achievements.map((achievement) => (
-                  <AchievementCard key={achievement.id} achievement={achievement} />
-                ))
-              )}
-            </div>
-          )}
         </div>
       </main>
 
@@ -480,30 +524,112 @@ export default function ProfilePage() {
   );
 }
 
-// Quest Card Component
+function ProfileMenu({
+  menuOpen,
+  setMenuOpen,
+  menuRef,
+  onShare,
+}: {
+  menuOpen: boolean;
+  setMenuOpen: (v: boolean | ((p: boolean) => boolean)) => void;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  onShare: () => void;
+}) {
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setMenuOpen((v: boolean) => !v)}
+        className="p-2.5 rounded-full hover:bg-white/5 transition-colors text-neutral-300"
+        title="Меню"
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+      >
+        <MoreVertical className="w-5 h-5" />
+      </button>
+      {menuOpen && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full mt-2 min-w-[180px] rounded-2xl bg-[var(--m3-surface-container-high)] border border-white/10 shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-1 duration-150"
+        >
+          <button
+            role="menuitem"
+            onClick={() => {
+              setMenuOpen(false);
+              onShare();
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-white/5 transition-colors text-left"
+          >
+            <Share2 className="w-4 h-4 text-neutral-300" />
+            <span>Поделиться</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TabChip({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${
+        active
+          ? "bg-accent/15 text-accent border border-accent/30"
+          : "bg-transparent text-neutral-300 border border-neutral-800 hover:border-neutral-700"
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function StatTile({
+  icon,
+  value,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: number;
+  label: string;
+}) {
+  return (
+    <div className="bg-[var(--m3-surface-container)] rounded-2xl px-3 py-4 flex flex-col items-center justify-center gap-1.5">
+      <div className="opacity-80">{icon}</div>
+      <div className="text-xl sm:text-2xl font-semibold text-foreground">{value}</div>
+      <div className="text-[11px] sm:text-xs text-neutral-400 text-center leading-tight">{label}</div>
+    </div>
+  );
+}
+
 function QuestCard({ quest }: { quest: Quest }) {
   return (
     <Link
       href={`/market/${quest.id}`}
-      className="bg-neutral-900/50 rounded-lg overflow-hidden border border-neutral-900 hover:border-accent/30 transition-colors"
+      className="bg-[var(--m3-surface-container)] rounded-2xl overflow-hidden hover:bg-[var(--m3-surface-container-high)] transition-colors"
     >
       <div className="aspect-video bg-neutral-950">
-        {quest.preview_image_url ? (
-          <img
-            src={quest.preview_image_url}
-            alt={quest.title}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full text-neutral-600 text-4xl">
-            🎮
-          </div>
-        )}
+        <QuestCover
+          src={quest.preview_image_url}
+          alt={quest.title}
+          className="m3-profile-quest-cover"
+          imgClassName="w-full h-full object-cover"
+        />
       </div>
-      <div className="p-4 space-y-3">
-        <h3 className="font-medium line-clamp-1">{quest.title}</h3>
+      <div className="p-4 space-y-2">
+        <h3 className="font-medium line-clamp-1 text-foreground">{quest.title}</h3>
         <p className="text-neutral-400 text-sm line-clamp-2">{quest.description}</p>
-        <div className="flex items-center gap-4 text-xs text-neutral-400">
+        <div className="flex items-center gap-4 text-xs text-neutral-400 pt-1">
           <div className="flex items-center gap-1">
             <Heart className="w-3 h-3" />
             <span>{quest.like_count}</span>
@@ -522,11 +648,10 @@ function QuestCard({ quest }: { quest: Quest }) {
   );
 }
 
-// Review Card Component
 function ReviewCard({ review }: { review: Review }) {
   return (
-    <div className="bg-neutral-900/30 rounded-lg p-6">
-      <div className="flex items-start justify-between mb-3">
+    <div className="bg-[var(--m3-surface-container)] rounded-2xl p-5">
+      <div className="flex items-start justify-between mb-2">
         <Link
           href={`/market/${review.quest_id}`}
           className="font-medium text-accent hover:underline"
@@ -534,7 +659,7 @@ function ReviewCard({ review }: { review: Review }) {
           {review.quest_title || "Квест"}
         </Link>
         {review.rating && review.rating > 0 && (
-          <div className="flex gap-1">
+          <div className="flex gap-0.5">
             {[1, 2, 3, 4, 5].map((star) => (
               <Star
                 key={star}
@@ -549,7 +674,7 @@ function ReviewCard({ review }: { review: Review }) {
         )}
       </div>
       {review.text_content && (
-        <p className="text-neutral-300 leading-relaxed mb-3">
+        <p className="text-neutral-200 text-[15px] leading-relaxed mb-2">
           {review.text_content}
         </p>
       )}
@@ -564,23 +689,22 @@ function ReviewCard({ review }: { review: Review }) {
   );
 }
 
-// Achievement Card Component
 function AchievementCard({ achievement }: { achievement: Achievement }) {
   const icon = achievementIcons[achievement.id] || "🏆";
 
   return (
-    <div className="bg-neutral-900/30 rounded-lg p-4 border border-neutral-900">
+    <div className="bg-[var(--m3-surface-container)] rounded-2xl p-4">
       <div className="flex items-start gap-3">
-        <div className="text-3xl">{icon}</div>
-        <div className="flex-1">
-          <h3 className="font-medium mb-1">{achievement.name}</h3>
-          <p className="text-neutral-400 text-sm mb-2">{achievement.description}</p>
+        <div className="text-3xl shrink-0">{icon}</div>
+        <div className="flex-1 min-w-0">
+          <h3 className="font-medium mb-1 text-foreground truncate">{achievement.name}</h3>
+          <p className="text-neutral-400 text-sm mb-2 line-clamp-2">{achievement.description}</p>
           <div className="flex items-center justify-between text-xs">
             <span className="text-neutral-500">
               {new Date(achievement.achieved_at).toLocaleDateString("ru-RU")}
             </span>
             {achievement.xp_reward > 0 && (
-              <span className="text-accent">+{achievement.xp_reward} XP</span>
+              <span className="text-accent font-medium">+{achievement.xp_reward} XP</span>
             )}
           </div>
         </div>
@@ -589,90 +713,118 @@ function AchievementCard({ achievement }: { achievement: Achievement }) {
   );
 }
 
-// Header Component
 function Header({
   currentUser,
   onSignIn,
   onSignOut,
+  title,
 }: {
   currentUser: CurrentUser | null;
   onSignIn: (response: CredentialResponse) => void;
   onSignOut: () => void;
+  title?: string;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    function onDocClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [menuOpen]);
+
+  const handleShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: title || "Meander", url });
+      } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {}
+    setMenuOpen(false);
+  };
+
   return (
-    <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b border-neutral-900">
-      <nav className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-        <Link href="/" className="flex items-center gap-3">
-          <img
-            src="/images/лого свг без фона.svg"
-            alt="Meander"
-            className="h-8 w-auto"
-          />
+    <header className="m3-top-app-bar">
+      <div className="m3-top-app-bar-inner">
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== "undefined" && window.history.length > 1) {
+              window.history.back();
+            } else {
+              window.location.href = "/market";
+            }
+          }}
+          className="m3-back-button"
+          aria-label="Назад"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <Link href="/" className="m3-logo m3-logo-link">
+          <img src="/images/logo.svg" alt="Meander" className="h-7 md:h-8 w-auto" />
         </Link>
-        <div className="flex items-center gap-6">
-          <Link
-            href="/market"
-            className="text-sm text-neutral-400 hover:text-accent transition-colors"
-          >
-            Маркет
-          </Link>
+        {title && <span className="m3-header-title-mobile">{title}</span>}
+
+        <div className="m3-header-end">
           {currentUser ? (
-            <div className="flex items-center gap-4">
-              <Link
-                href={`/profile/${currentUser.id}`}
-                className="flex items-center gap-2"
-              >
-                {currentUser.avatar_url ? (
-                  <img
-                    src={currentUser.avatar_url}
-                    alt={currentUser.full_name || ""}
-                    className="w-8 h-8 rounded-full object-cover"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-neutral-800 flex items-center justify-center text-neutral-500 font-bold">
-                    {getInitials(currentUser.full_name)}
-                  </div>
-                )}
-                <span className="text-sm text-neutral-300">{currentUser.full_name}</span>
-                {currentUser.is_verified && (
-                  <CheckCircle className="w-4 h-4 text-accent" />
-                )}
-              </Link>
-              <button
-                onClick={onSignOut}
-                className="p-2 text-neutral-400 hover:text-accent transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
+            <Link href={`/profile/${currentUser.id}`} className="flex items-center gap-2 m3-header-user">
+              {currentUser.avatar_url ? (
+                <img
+                  src={currentUser.avatar_url}
+                  alt={currentUser.full_name || ""}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+              ) : (
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold"
+                  style={{
+                    background: "var(--m3-surface-container-high)",
+                    color: "var(--m3-on-surface-variant)",
+                    fontSize: 12,
+                  }}
+                >
+                  {getInitials(currentUser.full_name)}
+                </div>
+              )}
+              <span className="hidden sm:inline m3-body-medium">{currentUser.full_name}</span>
+              {currentUser.is_verified && (
+                <CheckCircle className="w-4 h-4" style={{ color: "var(--m3-primary)" }} />
+              )}
+            </Link>
           ) : (
-            <GoogleLogin
-              onSuccess={onSignIn}
-              onError={() => alert("Ошибка входа через Google")}
-              text="signin_with"
-              theme="filled_black"
-              size="medium"
-              width={120}
-            />
+            <GoogleSignInButton onSuccess={onSignIn} />
+          )}
+
+          {currentUser && (
+            <button
+              type="button"
+              className="m3-icon-button"
+              onClick={onSignOut}
+              aria-label="Выйти"
+              title="Выйти"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
           )}
         </div>
-      </nav>
+
+        <nav className="m3-nav-desktop">
+          <Link href="/market">Маркет</Link>
+        </nav>
+      </div>
     </header>
   );
 }
 
-// Footer Component
-function Footer() {
-  return (
-    <footer className="py-8 px-6 border-t border-neutral-900">
-      <div className="max-w-7xl mx-auto text-center text-neutral-600 text-sm">
-        <p>© {new Date().getFullYear()} IILLUMINAT. Meander. Все права защищены.</p>
-      </div>
-    </footer>
-  );
-}
-
-// Helper function
 function getInitials(name: string | null) {
   if (!name || name.length === 0) return "?";
   const parts = name.trim().split(" ");
