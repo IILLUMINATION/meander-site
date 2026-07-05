@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
+import ForDevelopers from "@/components/ForDevelopers";
 
 const API_URL = "/api/be";
 
@@ -615,6 +616,8 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      <ForDevelopers />
 
       <section
         id="roadmap"
