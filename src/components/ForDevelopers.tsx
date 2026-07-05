@@ -1,8 +1,8 @@
 "use client";
 
-import { Terminal, Copy, CheckCircle, ExternalLink } from "lucide-react";
+import { Terminal, Copy, CheckCircle, ExternalLink, ArrowRight } from "lucide-react";
 import { useState } from "react";
-import ApiDocs from "./ApiDocs";
+import Link from "next/link";
 
 export default function ForDevelopers() {
   const [copied, setCopied] = useState(false);
@@ -34,9 +34,9 @@ export default function ForDevelopers() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          <div className="lg:col-span-1 space-y-6">
-            <div className="m3-card">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+          <div className="space-y-6">
+            <div className="m3-card h-full">
               <h3 className="m3-title-large mb-4 text-white">Python API</h3>
               <p className="m3-body-medium mb-6 text-gray-300">
                 Один из участников нашего сообщества (<strong>HashtagCode</strong>)
@@ -83,14 +83,28 @@ export default function ForDevelopers() {
             </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="m3-card overflow-hidden h-full">
-              <h3 className="m3-title-large mb-4 text-white border-b border-white/10 pb-4">
-                Краткая документация API
-              </h3>
-              <div className="overflow-y-auto max-h-[500px] pr-2 custom-scrollbar">
-                <ApiDocs />
+          <div>
+            <div className="m3-card h-full flex flex-col justify-center items-center text-center p-10">
+              <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                <Terminal size={32} className="text-green-400" />
               </div>
+              <h3 className="m3-title-large mb-4 text-white">
+                Документация API
+              </h3>
+              <p className="m3-body-medium mb-8 text-gray-400 max-w-sm">
+                Полная документация по REST API Meander: аутентификация, квесты, облачные сохранения, уведомления и ИИ.
+              </p>
+              <Link 
+                href="/api-docs" 
+                className="flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-transform hover:scale-105"
+                style={{ 
+                  backgroundColor: "var(--m3-primary)", 
+                  color: "black" 
+                }}
+              >
+                Читать документацию
+                <ArrowRight size={18} />
+              </Link>
             </div>
           </div>
         </div>
