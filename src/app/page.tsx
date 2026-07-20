@@ -30,6 +30,7 @@ import {
   ChevronRight,
   CheckCircle,
   Clock,
+  Copy,
 } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
@@ -454,6 +455,60 @@ export default function Home() {
                     </p>
                   </div>
                 )}
+              </div>
+            ) : currentPlatform === "linux" && isDesktop ? (
+              <div className="m3-download-desktop">
+                <div
+                  className="p-5 text-left w-full"
+                  style={{
+                    background: "var(--m3-surface-container-high)",
+                    borderRadius: "var(--m3-radius-lg)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <Terminal className="w-5 h-5" strokeWidth={1.5} style={{ color: "var(--m3-primary)" }} />
+                    <span className="m3-label-large" style={{ color: "var(--m3-on-surface-variant)" }}>
+                      Установка из AUR (Arch Linux)
+                    </span>
+                  </div>
+                  <div
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{
+                      background: "var(--m3-surface-container-lowest)",
+                      borderRadius: "var(--m3-radius-md)",
+                      border: "1px solid var(--m3-outline-variant)",
+                    }}
+                  >
+                    <code
+                      style={{
+                        color: "var(--m3-primary)",
+                        fontFamily: "monospace",
+                        fontSize: "1rem",
+                        fontWeight: 500,
+                      }}
+                    >
+                      yay -S meander-bin
+                    </code>
+                    <button
+                      onClick={() => navigator.clipboard.writeText("yay -S meander-bin")}
+                      className="m3-icon-button ml-auto"
+                      aria-label="Копировать команду"
+                      style={{ flexShrink: 0 }}
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <p className="m3-body-small mt-3" style={{ color: "var(--m3-on-surface-variant)" }}>
+                    Arch Linux, Manjaro, EndeavourOS и другие дистрибутивы на базе Arch
+                  </p>
+                </div>
+                <a
+                  href={getDownloadLink("linux")}
+                  className="m3-btn m3-btn-text mt-2"
+                >
+                  <Download className="w-4 h-4" strokeWidth={1.5} />
+                  <span>Скачать AppImage с GitHub</span>
+                </a>
               </div>
             ) : (
               <div className="m3-download-desktop">
