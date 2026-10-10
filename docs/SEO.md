@@ -35,6 +35,9 @@
 | `src/app/market/MarketClient.tsx` | прежний клиент, принимает `initialQuests` |
 | `src/app/market/[id]/page.tsx` | серверная обёртка квеста, метаданные, JSON-LD |
 | `src/app/market/[id]/QuestDetailClient.tsx` | прежний клиент, принимает `initialQuest` |
+| `src/app/profile/[id]/page.tsx` | серверная обёртка автора: карточка из `/profiles/<id>`, квесты из кэша каталога, `generateMetadata`, JSON-LD `ProfilePage` |
+| `src/app/profile/[id]/ProfileClient.tsx` | прежний клиент (переименован из `page.tsx`), принимает `userId`/`initialProfile`/`initialQuests` |
+| `src/lib/profile.ts` | тип `Profile` (был заперт внутри `use client`-файла) |
 | `src/app/robots.ts`, `src/app/sitemap.ts` | robots и карта из каталога |
 | `src/app/opengraph-image.jpg` | 1200×630, раздаётся по `/opengraph-image.jpg` |
 | `src/app/layout.tsx` | `metadataBase` = meander.sbs, canonical-ссылка на мёртвый домен убрана, шаблон заголовков |
@@ -48,7 +51,18 @@
 того, сколько написал автор.
 
 `/market` — 472 КБ HTML с карточками, `<title>` и `<description>` по фактическому
-содержимому каталога. `/sitemap.xml` — 205 URL.
+содержимому каталога. `/sitemap.xml` — 310 URL (200 квестов + 105 авторов +
+главная/маркет/docs).
+
+Страницы авторов (`/profile/<id>`) были четвёртой такой же клиентской страницей:
+робот получал 13.8 КБ оболочки с `<title>Meander — текстовые квесты</title>`, без
+имени и без списка квестов, хотя ссылка на автора стоит на каждой странице
+квеста. Переделаны по той же схеме: сервер тянет карточку `/profiles/<id>` (это
+НЕ под `publicQuestLimiter` — лимитер висит только на `/quests*`, `app.ts:194`),
+а квесты автора группирует из уже закешенного каталога, то есть лишний запрос к
+API на страницу ровно один. После правок: `/profile/3a84a172…` (10 квестов) —
+77 КБ, имя, био, счётчики, 10 ссылок на квесты и JSON-LD `ProfilePage` в первом
+HTML; `/profile/965502fd…` (1 квест) — 37 КБ. Несуществующий id и битый id — 404.
 
 Статьи документации (`/docs/[slug]`) были такой же клиентской страницей:
 `useEffect` + fetch `/docs/<slug>.md`, то есть в HTML лежало 126 знаков
@@ -111,10 +125,13 @@ npx next start -p 3010 &
 
 ```bash
 curl -s localhost:3010/robots.txt                 # Sitemap: https://meander.sbs/sitemap.xml
-curl -s localhost:3010/sitemap.xml | grep -c '<loc>'   # 205 = главная + маркет + docs + 200 квестов
+curl -s localhost:3010/sitemap.xml | grep -c '<loc>'   # 310 = главная + маркет + docs + 200 квестов + 105 авторов
 page=$(curl -s localhost:3010/market | grep -o 'market/[0-9a-f-]\{36\}' | head -1)
 curl -s "localhost:3010/$page" | grep -o '<title>[^<]*\|rel="canonical"\|application/ld+json'
 curl -s -o /dev/null -w '%{http_code}\n' "localhost:3010/market/11111111-2222-3333-4444-555555555555"   # 404
+profile=$(curl -s localhost:3010/market | grep -o 'profile/[0-9a-f-]\{36\}' | head -1)
+curl -s "localhost:3010/$profile" | grep -o '<title>[^<]*\|"@type":\s*"ProfilePage"'   # имя автора в заголовке
+curl -s -o /dev/null -w '%{http_code}\n' "localhost:3010/profile/11111111-2222-3333-4444-555555555555"  # 404
 curl -s localhost:3010/docs/quest-structure | wc -c            # ~60 КБ, текст статьи в HTML
 curl -s -o /dev/null -w '%{http_code}\n' localhost:3010/docs/test-article   # 404: slug не в реестре
 ```
@@ -151,9 +168,9 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:3010/docs/test-article   # 40
    `ratingCount` — это либо выдуманное число, либо невалидный JSON-LD.
    Правка бэкенда — одна строка (`COUNT(*) AS rating_count` рядом с `AVG`),
    но это деплой на прод: ~0.5 дня с проверкой.
-4. **Страницы авторов** (`/profile/<id>`). Остались чисто клиентскими: робот
-   видит пустоту. SEO-эффект умеренный (брендовые запросы по авторам), работа —
-   тот жеprops-seeding, ~0.5 дня.
+4. **Страницы авторов** (`/profile/<id>`) — ~~остались чисто клиентскими~~
+   **сделано 10.10.2026**: серверная обёртка, метаданные, JSON-LD, авторы в
+   sitemap, ссылка на автора в карточке маркета вместо `<span onClick>`.
 5. **Подтверждение владения и подача карты.** Без Yandex Webmaster и Google
    Search Console индексация идёт, но медленно и вслепую. Нужны DNS-записи или
    HTML-файл в `public/` — это прод.
@@ -165,6 +182,11 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:3010/docs/test-article   # 40
    ссылок. Поднять стартовый `displayCount` (например, до 60) — одна строка;
    отдельный «линквалл» изо всех 200 не советую: это пограничный с клоакингом
    приём.
+8. **Сколько авторов индексировать.** В карту легли все 105 авторов каталога,
+   но 69 из них — авторы одного квеста: их страница почти повторяет страницу
+   этого квеста. Если поисковик сочтёт их дублями, фильтр в `sitemap.ts` —
+   `.filter(([, qs]) => qs.length >= 2)` (одна строка), плюс такой же `noindex`
+   в `generateMetadata` страницы автора, чтобы он не противоречил карте.
 
 ## 8. Пайплайн выкатки (тоже требует «да»)
 
