@@ -131,6 +131,17 @@ export async function getAuthors(): Promise<Map<string, Quest[]>> {
   return byAuthor;
 }
 
+/**
+ * Витрина главной: самые скачиваемые квесты. Тот же кэш каталога, поэтому
+ * главная не стоит ни одного лишнего запроса к API.
+ */
+export async function getTopQuests(limit = 5): Promise<Quest[]> {
+  const list = await getQuestList();
+  return [...list]
+    .sort((a, b) => b.downloads_count - a.downloads_count)
+    .slice(0, limit);
+}
+
 export function questUrl(id: string): string {
   return `${SITE_ORIGIN}/market/${id}`;
 }
