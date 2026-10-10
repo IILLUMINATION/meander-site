@@ -26,9 +26,16 @@ import {
   Edit2,
   X,
   ArrowLeft,
+  Play,
 } from "lucide-react";
 
 const API_URL = "/api/be";
+
+// meander://quest/<id> клиент разбирает на обеих платформах: intent-filter со
+// схемой meander в AndroidManifest и CFBundleURLTypes в Info.plist. Ссылка, а не
+// редирект по таймеру: приложение либо перехватит переход, либо браузер сам
+// скажет, что открывать нечем, а «Скачать» остаётся рядом.
+const PLAY_HREF_PREFIX = "meander://quest/";
 
 interface Review {
   id: string;
@@ -420,8 +427,16 @@ export default function QuestDetailClient({
                 </button>
               </div>
 
-              <div className="flex gap-2">
-                <button onClick={handleDownload} className="m3-btn m3-btn-filled flex-1">
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href={`${PLAY_HREF_PREFIX}${quest.id}`}
+                  className="m3-btn m3-btn-filled flex-1"
+                  title="Откроется в приложении Meander"
+                >
+                  <Play className="w-4 h-4" />
+                  Играть
+                </a>
+                <button onClick={handleDownload} className="m3-btn m3-btn-tonal">
                   <Download className="w-4 h-4" />
                   Скачать {formatFileSize(quest.quest_size_bytes)}
                 </button>
