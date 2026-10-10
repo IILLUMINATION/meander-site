@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { SITE_ORIGIN } from "@/lib/seo";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,33 +14,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin", "cyrillic"],
 });
 
+const DESCRIPTION =
+  "Meander — бесплатная программа для создания и прохождения текстовых квестов: визуальный редактор скриптов, ветвящиеся сюжеты, изображения и аудио. В маркете — сотни историй от авторов.";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://meander.ru"),
-  title: "Meander | Текстовые квесты",
-  description: "Meander - бесплатная программа для создания и прохождения текстовых квестов. Визуальный редактор скриптов, ветвящиеся сюжеты, поддержка изображений и аудио.",
-  keywords: ["текстовые квесты", "создание игр", "визуальная новелла", "редактор скриптов", "Meander"],
+  // Домен задаёт один SITE_ORIGIN из src/lib/seo.ts: метаданные, canonical,
+  // robots и sitemap должны ссылаться на один и тот же хост.
+  metadataBase: new URL(SITE_ORIGIN),
+  title: {
+    default: "Meander — текстовые квесты",
+    template: "%s | Meander",
+  },
+  description: DESCRIPTION,
+  keywords: ["текстовые квесты", "создание игр", "визуальная новелла", "редактор скриптов", "interactive fiction", "Meander"],
   authors: [{ name: "IILLUMINAT" }],
   creator: "IILLUMINAT",
   openGraph: {
     type: "website",
     locale: "ru_RU",
-    url: "https://meander.ru",
+    url: SITE_ORIGIN,
     siteName: "Meander",
-    title: "Meander | Текстовые квесты",
-    description: "Бесплатная программа для создания и прохождения текстовых квестов",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Meander",
-      },
-    ],
+    title: "Meander — текстовые квесты",
+    description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Meander | Текстовые квесты",
-    description: "Бесплатная программа для создания и прохождения текстовых квестов",
+    title: "Meander — текстовые квесты",
+    description: DESCRIPTION,
   },
   robots: {
     index: true,
@@ -56,9 +57,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <head>
-        <link rel="canonical" href="https://meander.ru" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
