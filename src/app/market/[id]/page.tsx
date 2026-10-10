@@ -6,7 +6,7 @@ import {
   excerpt,
   findQuest,
   isNotFoundError,
-  isQuestId,
+  isUuid,
   jsonLd,
   questUrl,
   SITE_ORIGIN,
@@ -25,7 +25,7 @@ export const revalidate = 3600;
  * переспрашиваем точечно: страницу отдаём, но в индекс не отпускаем.
  */
 async function loadQuest(id: string): Promise<{ quest: Quest; indexable: boolean }> {
-  if (!isQuestId(id)) notFound();
+  if (!isUuid(id)) notFound();
   const fromCatalog = await findQuest(id);
   if (fromCatalog) return { quest: fromCatalog, indexable: true };
 

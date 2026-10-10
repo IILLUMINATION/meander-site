@@ -1,11 +1,19 @@
 import type { MetadataRoute } from "next";
 import { docArticles } from "@/lib/docs-registry";
-import { SITE_ORIGIN, getQuestList, questUrl } from "@/lib/seo";
+import {
+  authorUrl,
+  getAuthors,
+  questUrl,
+  SITE_ORIGIN,
+} from "@/lib/seo";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const quests = await getQuestList();
+  // Одна группировка каталога даёт и квесты, и авторов: sitemap не стоит ни
+  // одного запроса к API сверх того, что уже кэшируется.
+  const authors = await getAuthors();
+  const quests = [...authors.values()].flat();
 
   return [
     { url: SITE_ORIGIN, changeFrequency: "weekly", priority: 1 },
@@ -23,6 +31,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(quest.updated_at),
       changeFrequency: "weekly" as const,
       priority: 0.7,
+    })),
+    // Страницы авторов: на них ведёт ссылка с каждой карточки квеста, и теперь
+    // они отдают содержимое сервером, а не пустую оболочку.
+    ...[...authors.entries()].map(([id, authorQuests]) => ({
+      url: authorUrl(id),
+      lastModified: new Date(
+        Math.max(...authorQuests.map((q) => Date.parse(q.updated_at)))
+      ),
+      changeFrequency: "weekly" as const,
+      priority: 0.5,
     })),
   ];
 }

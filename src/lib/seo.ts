@@ -38,7 +38,7 @@ export function isNotFoundError(e: unknown): boolean {
 }
 
 /** Правильный UUID. Нужен до запроса: id из URL иначе попадает в путь запроса к API. */
-export function isQuestId(id: string): boolean {
+export function isUuid(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 }
 
@@ -112,8 +112,31 @@ export async function findQuest(id: string): Promise<Quest | undefined> {
   return list.find((q) => q.id === id);
 }
 
+/**
+ * Авторы опубликованного каталога и их квесты — из того же кэша, что и маркет,
+ * поэтому генерация страницы автора не стоит ни одного лишнего запроса к API
+ * (кроме самой карточки профиля).
+ *
+ * Публичный GET /quests отдаёт автора в каждом элементе (author_id, author_name),
+ * так что список авторов — это просто группировка каталога.
+ */
+export async function getAuthors(): Promise<Map<string, Quest[]>> {
+  const list = await getQuestList();
+  const byAuthor = new Map<string, Quest[]>();
+  for (const quest of list) {
+    const quests = byAuthor.get(quest.author_id);
+    if (quests) quests.push(quest);
+    else byAuthor.set(quest.author_id, [quest]);
+  }
+  return byAuthor;
+}
+
 export function questUrl(id: string): string {
   return `${SITE_ORIGIN}/market/${id}`;
+}
+
+export function authorUrl(id: string): string {
+  return `${SITE_ORIGIN}/profile/${id}`;
 }
 
 /**
