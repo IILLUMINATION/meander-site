@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import MarkdownRenderer from "../../../components/MarkdownRenderer";
 import ScrollToTop from "../../../components/ScrollToTop";
@@ -65,69 +65,17 @@ function extractMetaData(content: string): MetaData {
   return meta;
 }
 
-export default function ArticlePage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const [content, setContent] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function DocsArticleClient({
+  slug,
+  markdown,
+}: {
+  slug: string;
+  markdown: string;
+}) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [tocOpen, setTocOpen] = useState(false);
-  const [headings, setHeadings] = useState<Heading[]>([]);
-  const [meta, setMeta] = useState<MetaData>({});
-
-  useEffect(() => {
-    async function loadContent() {
-      try {
-        setLoading(true);
-        const response = await fetch(`/docs/${slug}.md`);
-        if (!response.ok) {
-          throw new Error("Статья не найдена");
-        }
-        const text = await response.text();
-        setContent(text);
-        setHeadings(extractHeadings(text));
-        setMeta(extractMetaData(text));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Ошибка загрузки");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadContent();
-  }, [slug]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen m3-surface flex items-center justify-center">
-        <div className="text-center">
-          <div
-            className="w-8 h-8 rounded-full animate-spin mx-auto mb-4"
-            style={{
-              border: "2px solid var(--m3-outline-variant)",
-              borderTopColor: "var(--m3-primary)",
-            }}
-          />
-          <p className="m3-body-small m3-text-secondary">Загрузка статьи...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !content) {
-    return (
-      <div className="min-h-screen m3-surface flex items-center justify-center px-4">
-        <div className="text-center max-w-md">
-          <h1 className="m3-headline-large mb-4">Статья не найдена</h1>
-          <p className="m3-body-medium m3-text-secondary mb-6">{error}</p>
-          <Link href="/docs" className="m3-btn m3-btn-filled">
-            <ArrowLeft className="w-4 h-4" />
-            К документации
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const headings = extractHeadings(markdown);
+  const meta = extractMetaData(markdown);
 
   return (
     <div className="min-h-screen m3-surface">
@@ -295,7 +243,7 @@ export default function ArticlePage({ params }: { params: Promise<{ slug: string
         </div>
 
         <main className="flex-1 py-8 md:py-12 px-4 md:px-8 lg:px-12 max-w-4xl">
-          <MarkdownRenderer content={content} />
+          <MarkdownRenderer content={markdown} />
 
           <div
             className="mt-12 md:mt-16 pt-8"
