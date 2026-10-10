@@ -37,6 +37,11 @@ const API_URL = "/api/be";
 // скажет, что открывать нечем, а «Скачать» остаётся рядом.
 const PLAY_HREF_PREFIX = "meander://quest/";
 
+// Плеер живёт на том же origin, что и сайт (/play/ отдаёт nginx, архивы —
+// /quest-src/). Это обязательно: вкладка с COEP: require-corp не пустит архив
+// с другого хоста, поэтому ссылка всегда относительная.
+const WEB_PLAY_HREF = "/play/";
+
 interface Review {
   id: string;
   quest_id: string;
@@ -429,12 +434,21 @@ export default function QuestDetailClient({
 
               <div className="flex flex-wrap gap-2">
                 <a
-                  href={`${PLAY_HREF_PREFIX}${quest.id}`}
+                  href={`${WEB_PLAY_HREF}?quest=${quest.id}`}
+                  target="_blank"
+                  rel="noopener"
                   className="m3-btn m3-btn-filled flex-1"
-                  title="Откроется в приложении Meander"
+                  title={`Игра откроется в этой вкладке, архив ~${formatFileSize(quest.quest_size_bytes)}`}
                 >
                   <Play className="w-4 h-4" />
                   Играть
+                </a>
+                <a
+                  href={`${PLAY_HREF_PREFIX}${quest.id}`}
+                  className="m3-btn m3-btn-tonal"
+                  title="Открыть в приложении Meander"
+                >
+                  В приложении
                 </a>
                 <button onClick={handleDownload} className="m3-btn m3-btn-tonal">
                   <Download className="w-4 h-4" />
