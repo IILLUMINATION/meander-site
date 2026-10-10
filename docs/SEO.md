@@ -38,6 +38,8 @@
 | `src/app/profile/[id]/page.tsx` | серверная обёртка автора: карточка из `/profiles/<id>`, квесты из кэша каталога, `generateMetadata`, JSON-LD `ProfilePage` |
 | `src/app/profile/[id]/ProfileClient.tsx` | прежний клиент (переименован из `page.tsx`), принимает `userId`/`initialProfile`/`initialQuests` |
 | `src/lib/profile.ts` | тип `Profile` (был заперт внутри `use client`-файла) |
+| `src/app/page.tsx` | серверная обёртка главной: топ-5 из кэша каталога, canonical, JSON-LD (`Organization`/`WebSite`/`SoftwareApplication`/`ItemList`) |
+| `src/app/HomeClient.tsx` | прежняя главная (переименована из `page.tsx`), принимает `topQuests`; собственный fetch всего каталога убран |
 | `src/app/robots.ts`, `src/app/sitemap.ts` | robots и карта из каталога |
 | `src/app/opengraph-image.jpg` | 1200×630, раздаётся по `/opengraph-image.jpg` |
 | `src/app/layout.tsx` | `metadataBase` = meander.sbs, canonical-ссылка на мёртвый домен убрана, шаблон заголовков |
@@ -63,6 +65,15 @@
 API на страницу ровно один. После правок: `/profile/3a84a172…` (10 квестов) —
 77 КБ, имя, био, счётчики, 10 ссылок на квесты и JSON-LD `ProfilePage` в первом
 HTML; `/profile/965502fd…` (1 квест) — 37 КБ. Несуществующий id и битый id — 404.
+
+Главная (`/`) была пятой такой же страницей: 44 КБ, 2188 знаков статического
+текста и **ноль** ссылок на квесты — блок «Топ квестов» грузился `axios`-ом,
+при этом каждый посетитель тянул ради пяти карточек весь каталог (200 записей)
+на свой IP, а лимит на `/quests*` — 60 запросов за 15 минут. Теперь список
+приходит пропсом из того же кэша (`getTopQuests`), `revalidate = 1800`. После
+правок: 71 КБ, 2458 знаков, 5 ссылок на квесты и 5 на авторов, JSON-LD с
+`SoftwareApplication` и `ItemList` топ-5, canonical на `/`. Клиентский fetch
+каталога убран — главной он больше не нужен.
 
 Статьи документации (`/docs/[slug]`) были такой же клиентской страницей:
 `useEffect` + fetch `/docs/<slug>.md`, то есть в HTML лежало 126 знаков
@@ -132,6 +143,8 @@ curl -s -o /dev/null -w '%{http_code}\n' "localhost:3010/market/11111111-2222-33
 profile=$(curl -s localhost:3010/market | grep -o 'profile/[0-9a-f-]\{36\}' | head -1)
 curl -s "localhost:3010/$profile" | grep -o '<title>[^<]*\|"@type":\s*"ProfilePage"'   # имя автора в заголовке
 curl -s -o /dev/null -w '%{http_code}\n' "localhost:3010/profile/11111111-2222-3333-4444-555555555555"  # 404
+curl -s localhost:3010/ | grep -o 'href="/market/[0-9a-f-]\{36\}"' | wc -l   # 5: топ квестов в SSR главной
+curl -s localhost:3010/ | grep -o '"@type":"[^"]*"' | sort -u                # Organization, WebSite, SoftwareApplication, ItemList (+ ListItem, Offer)
 curl -s localhost:3010/docs/quest-structure | wc -c            # ~60 КБ, текст статьи в HTML
 curl -s -o /dev/null -w '%{http_code}\n' localhost:3010/docs/test-article   # 404: slug не в реестре
 ```
@@ -195,8 +208,11 @@ curl -s -o /dev/null -w '%{http_code}\n' localhost:3010/docs/test-article   # 40
 ```bash
 ssh srv
 cd /var/www/meander-site && git pull
-pm2 restart meander-site     # порт 3002, наружу через nginx/Cloudflare на meander.sbs
+npm run build                      # обязательно: pm2 перезапускает next start, а он отдаёт готовый .next
+pm2 restart meander-site           # порт 3002, наружу через nginx/Cloudflare на meander.sbs
 ```
 
-Порядок: `git push` в `IILLUMINATION/meander-site` → pull на VPS → `pm2 restart`
-→ проверка из §5 уже против боевого адреса. Оба шага с «да».
+Порядок: `git push` в `IILLUMINATION/meander-site` → pull на VPS → сборка →
+`pm2 restart` → проверка из §5 уже против боевого адреса. Оба шага с «да».
+Без `npm run build` рестарт поднимает прошлый билд: код в working tree новый,
+а выдача — старая, и по `git log` этого не видно.
