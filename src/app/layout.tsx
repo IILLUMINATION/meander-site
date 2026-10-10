@@ -61,7 +61,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+        {/* locale обязателен: без него Google берёт язык браузера, и экранный
+            диктор читает невидимую iframe кнопки «Über Google anmelden». */}
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID} locale="ru">
           {children}
         </GoogleOAuthProvider>
       </body>
