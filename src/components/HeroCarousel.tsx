@@ -19,6 +19,7 @@ export interface CarouselQuest {
   title: string;
   preview_image_url?: string | null;
   author_name?: string | null;
+  author_id?: string | null;
   author_is_verified?: boolean;
   is_demo?: boolean;
   downloads_count: number;
@@ -406,9 +407,21 @@ export default function HeroCarousel({ quests }: HeroCarouselProps) {
                     <div className="m3-carousel-item-meta">
                       <span className="m3-carousel-item-author">
                         <User className="w-3 h-3 flex-shrink-0" />
-                        <span className="truncate">
-                          {quest.author_name || "Аноним"}
-                        </span>
+                        {quest.author_id ? (
+                          // stopPropagation обязателен: весь баннер карусели —
+                          // ссылка на квест, клик по автору не должен уехать туда.
+                          <Link
+                            href={`/profile/${quest.author_id}`}
+                            className="truncate"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {quest.author_name || "Аноним"}
+                          </Link>
+                        ) : (
+                          <span className="truncate">
+                            {quest.author_name || "Аноним"}
+                          </span>
+                        )}
                         {quest.author_is_verified && (
                           <CheckCircle
                             className="w-3 h-3 flex-shrink-0"

@@ -494,6 +494,7 @@ function toCarouselQuests(quests: Quest[]): CarouselQuest[] {
     title: q.title,
     preview_image_url: q.preview_image_url,
     author_name: q.author_name,
+    author_id: q.author_id,
     author_is_verified: q.author_is_verified,
     is_demo: q.is_demo,
     downloads_count: q.downloads_count,
@@ -580,15 +581,15 @@ function QuestCard({
         <div className="m3-quest-card-author">
           <User className="w-3.5 h-3.5" strokeWidth={1.5} />
           {quest.author_id ? (
-            <span
-              onClick={(e) => {
-                e.stopPropagation();
-                window.location.href = `/profile/${quest.author_id}`;
-              }}
+            // Ссылка, а не span c onClick: страница автора должна быть видна
+            // краулеру в SSR-разметке маркета, иначе она достижима только из
+            // sitemap.
+            <Link
+              href={`/profile/${quest.author_id}`}
               className="m3-quest-card-author-name truncate"
             >
               {quest.author_name || "Аноним"}
-            </span>
+            </Link>
           ) : (
             <span className="truncate">{quest.author_name || "Аноним"}</span>
           )}
