@@ -92,10 +92,10 @@ const downloadLinks = {
     github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.14%2B259/Release.Macos.zip",
   },
   linux: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.14%2B259/Meander-linux-x64.AppImage",
+    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.15%2B260/Meander-linux-x64.AppImage",
   },
   windows: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.14%2B259/Release.Windows.zip",
+    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.15%2B260/Release.Windows.zip",
   },
 };
 
