@@ -17,6 +17,7 @@ import {
   Monitor,
   Terminal,
   MonitorPlay,
+  Apple,
   Send,
   Youtube,
   MessageSquare,
@@ -35,6 +36,8 @@ import {
 import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
 import ForDevelopers from "@/components/ForDevelopers";
+import DemoPlayer from "@/components/DemoPlayer";
+import { DOWNLOAD_LINKS } from "@/lib/downloads";
 
 const features = [
   {
@@ -71,38 +74,26 @@ const features = [
 
 const platforms = [
   { name: "Android", icon: Smartphone, type: "android" },
-  { name: "iOS", icon: Laptop, type: "ios" },
+  { name: "iOS", icon: Apple, type: "ios" },
   { name: "macOS", icon: MonitorPlay, type: "macos" },
   { name: "Linux", icon: Terminal, type: "linux" },
   { name: "Windows", icon: Monitor, type: "windows" },
 ];
 
-const downloadLinks = {
-  android: {
-    googlePlay: "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.7.7%2B208/Release.Android.apk",
-    apkpure: "https://apkpure.com/ru/meander-%D1%82%D0%B5%D0%BA%D1%81%D1%82%D0%BE%D0%B2%D1%8B%D0%B5-%D0%BA%D0%B2%D0%B5%D1%81%D1%82%D1%8B/com.IILLUMINAT.meadner",
-    trashbox: "https://trashbox.ru/topics/185703/meander-tekstovye-kvesty-1.0.1",
-    rustore: "https://www.rustore.ru/catalog/app/com.IILLUMINAT.meadner",
-  },
-  ios: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.7.7%2B208/Release.iOs.ipa",
-  },
-  macos: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.14%2B259/Release.Macos.zip",
-  },
-  linux: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.15%2B260/Meander-linux-x64.AppImage",
-  },
-  windows: {
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.8.15%2B260/Release.Windows.zip",
-  },
-};
-
 const roadmapItems = [
   {
-    title: "Поддержка Lua",
-    description: "Возможность написания скриптов на Lua для продвинутой логики",
+    title: "Сохранения в веб-плеере",
+    description: "Продолжать квест в браузере с того же слота, что и в приложении.",
+    status: "planned",
+  },
+  {
+    title: "Облачные сохранения",
+    description: "Синхронизация слотов между устройствами и платформами.",
+    status: "planned",
+  },
+  {
+    title: "Квесты в Telegram",
+    description: "Прохождение квестов прямо в чате, без установки приложения.",
     status: "planned",
   },
 ];
@@ -117,7 +108,8 @@ const socialLinks = [
 
 export default function HomeClient({
   topQuests,
-}: Readonly<{ topQuests: Quest[] }>) {
+  demoQuest,
+}: Readonly<{ topQuests: Quest[]; demoQuest?: Quest | null }>) {
   const [currentPlatform, setCurrentPlatform] = useState("android");
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -157,26 +149,26 @@ export default function HomeClient({
 
   const getDownloadLink = (platform: string) => {
     if (platform === "android") {
-      return downloadLinks.android.googlePlay;
+      return DOWNLOAD_LINKS.android.googlePlay;
     }
     if (platform === "ios") {
-      return downloadLinks.ios.github;
+      return DOWNLOAD_LINKS.ios.github;
     }
     if (platform === "macos") {
-      return downloadLinks.macos.github;
+      return DOWNLOAD_LINKS.macos.github;
     }
     if (platform === "linux") {
-      return downloadLinks.linux.github;
+      return DOWNLOAD_LINKS.linux.github;
     }
     if (platform === "windows") {
-      return downloadLinks.windows.github;
+      return DOWNLOAD_LINKS.windows.github;
     }
-    return downloadLinks.android.github;
+    return DOWNLOAD_LINKS.android.github;
   };
 
   const getAlternativeLinks = (platform: string) => {
     if (platform === "android") {
-      const links = downloadLinks.android;
+      const links = DOWNLOAD_LINKS.android;
       return [
         { name: "GitHub (APK)", url: links.github },
         { name: "APKPure", url: links.apkpure },
@@ -203,7 +195,7 @@ export default function HomeClient({
             <Link href="#features" className="m3-nav-item">Возможности</Link>
             <Link href="#download" className="m3-nav-item">Скачать</Link>
             <Link href="/market" className="m3-nav-item">Маркет</Link>
-            <Link href="#gallery" className="m3-nav-item">Галерея</Link>
+            <Link href="#gallery" className="m3-nav-item">Демо</Link>
             <Link href="/branding" className="m3-nav-item">Брендинг</Link>
             <Link href="/docs" className="m3-nav-item">Документация</Link>
             <Link href="#roadmap" className="m3-nav-item">Roadmap</Link>
@@ -254,7 +246,7 @@ export default function HomeClient({
           </Link>
           <hr className="m3-drawer-divider" />
           <Link href="#gallery" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
-            Галерея
+            Демо
           </Link>
           <Link href="/branding" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
             Брендинг
@@ -382,7 +374,7 @@ export default function HomeClient({
               <div className="m3-download-android">
                 <div className="m3-download-android-main">
                   <a
-                    href={downloadLinks.android.googlePlay}
+                    href={DOWNLOAD_LINKS.android.googlePlay}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Скачать в Google Play"
@@ -405,7 +397,7 @@ export default function HomeClient({
                   <div className="m3-download-qr">
                     <div className="m3-download-qr-frame">
                       <QRCodeSVG
-                        value={downloadLinks.android.googlePlay}
+                        value={DOWNLOAD_LINKS.android.googlePlay}
                         size={160}
                         level="H"
                         includeMargin={false}
@@ -545,8 +537,21 @@ export default function HomeClient({
             className="m3-headline-medium mb-8 md:mb-12 text-center tracking-widest uppercase"
             style={{ color: "var(--m3-on-surface-variant)", fontSize: "1.125rem" }}
           >
-            галерея / демо
+            играбельное демо
           </h2>
+          <DemoPlayer
+            questId={demoQuest?.id ?? "722b40c5-0fab-4877-9a0b-20ea44eb7c67"}
+            title={demoQuest?.title ?? "Добро пожаловать в Meander"}
+            previewUrl={demoQuest?.preview_image_url ?? "/images/screenshot-1.jpg"}
+          />
+          <div className="flex items-center justify-between mt-14 mb-5 md:mt-20 md:mb-7">
+            <h3 className="m3-title-large" style={{ color: "var(--m3-on-surface)" }}>
+              Как это выглядит
+            </h3>
+            <Link href="/market" className="m3-btn m3-btn-text">
+              Ещё квесты на маркете <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {[
               { src: "/images/screenshot-1.jpg", alt: "Скриншот программы из Google Play" },

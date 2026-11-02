@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Send, Youtube, MessageSquare, Shield, Heart } from "lucide-react";
+import { DOWNLOAD_LINKS } from "@/lib/downloads";
 
 const socialLinks = [
   { name: "Telegram канал", url: "https://t.me/meanderRU", icon: Send },
@@ -11,13 +12,6 @@ const socialLinks = [
   { name: "Simplex чат", url: "https://smp10.simplex.im/g#tFj94ScyihNimJ1Nga7AXylCi7ebUvi9fsa-oxlwr4s", icon: Shield },
   { name: "Boosty", url: "https://boosty.to/iilluminat/posts/8e4bc65c-f106-4560-b158-973d6e8a65f6", icon: Heart },
 ];
-
-const downloadLinks = {
-  android: {
-    googlePlay: "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
-    github: "https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/2.7.7%2B208/Release.Android.apk",
-  },
-};
 
 interface FooterProps {
   bgColor?: string;
@@ -82,7 +76,7 @@ export default function Footer({ bgColor }: FooterProps = {}) {
             <p className="m3-footer-section-title">Скачать</p>
             <div className="m3-footer-socials">
               <a
-                href={downloadLinks.android.googlePlay}
+                href={DOWNLOAD_LINKS.android.googlePlay}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="m3-footer-social-item"
@@ -90,7 +84,7 @@ export default function Footer({ bgColor }: FooterProps = {}) {
                 <span>Google Play</span>
               </a>
               <a
-                href={downloadLinks.android.github}
+                href={DOWNLOAD_LINKS.android.github}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="m3-footer-social-item"
@@ -111,7 +105,7 @@ export default function Footer({ bgColor }: FooterProps = {}) {
 
         <div className="m3-footer-bottom">
           <a
-            href={downloadLinks.android.googlePlay}
+            href={DOWNLOAD_LINKS.android.googlePlay}
             target="_blank"
             rel="noopener noreferrer"
             className="m3-footer-bottom-gplay"
