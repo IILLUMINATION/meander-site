@@ -73,9 +73,14 @@ export default async function HomePage() {
   // отрисуется карусель, а остальной текст страницы остаётся.
   const topQuests = await getTopQuests().catch(() => []);
 
+  const demoQuest =
+    topQuests.find((q) => q.id === "722b40c5-0fab-4877-9a0b-20ea44eb7c67") ??
+    topQuests[0] ??
+    null;
+
   return (
     <>
-      <HomeClient topQuests={topQuests} />
+      <HomeClient topQuests={topQuests} demoQuest={demoQuest} />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(homeSchema(topQuests))}
