@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import { Copy, Check, ExternalLink } from "lucide-react";
+import { safeUrlTransform } from "@/lib/safe-url";
 
 interface MarkdownRendererProps {
   content: string;
@@ -250,7 +251,7 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={components}
-        urlTransform={(url) => url}
+        urlTransform={safeUrlTransform}
       >
         {processedContent}
       </ReactMarkdown>
