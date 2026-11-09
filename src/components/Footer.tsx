@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { Send, Youtube, MessageSquare, Shield, Heart } from "lucide-react";
-import { DOWNLOAD_LINKS } from "@/lib/downloads";
+import { DOWNLOAD_LINKS, RELEASES_REPO, SOURCE_REPO } from "@/lib/downloads";
 
 const socialLinks = [
   { name: "Telegram канал", url: "https://t.me/meanderRU", icon: Send },
@@ -49,8 +49,9 @@ export default function Footer({ bgColor }: FooterProps = {}) {
               <span className="m3-footer-brand-name">Meander</span>
             </Link>
             <p className="m3-footer-brand-text">
-              Meander - бесплатная программа для создания и прохождения текстовых квестов.
-              Открытый формат .mnd, без рекламы и ограничений.
+              Meander — бесплатная программа с открытым исходным кодом
+              (AGPL-3.0) для создания и прохождения текстовых квестов. Без
+              рекламы и платных подписок, открытый формат .mnd.
             </p>
           </div>
 
@@ -100,12 +101,20 @@ export default function Footer({ bgColor }: FooterProps = {}) {
                 <span>GitHub (APK)</span>
               </a>
               <a
-                href="https://github.com/IILLUMINATION/meanderPUBLIC/releases"
+                href={`${RELEASES_REPO}/releases`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="m3-footer-social-item"
               >
                 <span>Все релизы</span>
+              </a>
+              <a
+                href={SOURCE_REPO}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="m3-footer-social-item"
+              >
+                <span>Исходный код</span>
               </a>
             </div>
           </div>
@@ -146,12 +155,20 @@ export default function Footer({ bgColor }: FooterProps = {}) {
               Документация
             </Link>
             <a
-              href="https://github.com/IILLUMINATION/meanderPUBLIC"
+              href={SOURCE_REPO}
               target="_blank"
               rel="noopener noreferrer"
               className="m3-footer-bottom-link"
             >
-              GitHub
+              Исходный код
+            </a>
+            <a
+              href={`${RELEASES_REPO}/releases`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="m3-footer-bottom-link"
+            >
+              Релизы
             </a>
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HomeClient from "./HomeClient";
 import type { Quest } from "@/lib/quest";
 import { SITE_ORIGIN, getTopQuests, jsonLd, questUrl } from "@/lib/seo";
+import { DOWNLOAD_LINKS, LICENSE_URL, SOURCE_REPO } from "@/lib/downloads";
 
 // Как и маркет: топ по скачиваниям должен обновляться сам, без ручной
 // перевыкладки сайта.
@@ -22,8 +23,13 @@ export const metadata: Metadata = {
  * к версии (2.8.14%2B259) и протухают с каждым билдом, а их в клиенте пять.
  * installUrl — App Store: iOS ставится только оттуда, и без него поиск
  * считал приложение недоступным на iPhone.
+ * license и codeRepository — AGPL-3.0 и репозиторий исходников: без них
+ * в разметке проекта с открытым кодом поиск не видит ни лицензии, ни ссылки
+ * на код.
  */
 function homeSchema(quests: Quest[]): unknown {
+  const playStore = DOWNLOAD_LINKS.android.googlePlay;
+  const appStore = DOWNLOAD_LINKS.ios.appStore;
   return {
     "@context": "https://schema.org",
     "@graph": [
@@ -33,6 +39,7 @@ function homeSchema(quests: Quest[]): unknown {
         name: "Meander",
         url: SITE_ORIGIN,
         logo: `${SITE_ORIGIN}/images/logo.png`,
+        sameAs: [SOURCE_REPO],
       },
       {
         "@type": "WebSite",
@@ -48,12 +55,12 @@ function homeSchema(quests: Quest[]): unknown {
         applicationCategory: "DeveloperApplication",
         operatingSystem: "Windows, macOS, Linux, Android, iOS",
         url: `${SITE_ORIGIN}/`,
-        downloadUrl: "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
-        installUrl: "https://apps.apple.com/app/id6813247027",
-        sameAs: [
-          "https://apps.apple.com/app/id6813247027",
-          "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
-        ],
+        downloadUrl: playStore,
+        installUrl: appStore,
+        sameAs: [appStore, playStore, SOURCE_REPO],
+        license: LICENSE_URL,
+        codeRepository: SOURCE_REPO,
+        isAccessibleForFree: true,
         offers: { "@type": "Offer", price: "0", priceCurrency: "RUB" },
       },
       ...(quests.length

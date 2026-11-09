@@ -2,8 +2,17 @@
 // две копии и разъезжались по версиям. Обновляем здесь вместе с релизом.
 export const LATEST_RELEASE = "2.8.15+260";
 
+// Исходники и сборки лежат в разных репозиториях: код — в meander-public,
+// а собранные артефакты — в meanderPUBLIC, который держит только релизы.
+// Путь /releases/download/ чувствителен к регистру, так что менять
+// meanderPUBLIC на строчный нельзя: ссылки начнут отдавать 404.
+export const SOURCE_REPO = "https://github.com/IILLUMINATION/meander-public";
+export const RELEASES_REPO = "https://github.com/IILLUMINATION/meanderPUBLIC";
+export const LICENSE_NAME = "AGPL-3.0-or-later";
+export const LICENSE_URL = "https://www.gnu.org/licenses/agpl-3.0.html";
+
 const release = (version: string, asset: string) =>
-  `https://github.com/IILLUMINATION/meanderPUBLIC/releases/download/${encodeURIComponent(version)}/${asset}`;
+  `${RELEASES_REPO}/releases/download/${encodeURIComponent(version)}/${asset}`;
 
 export const DOWNLOAD_LINKS = {
   android: {

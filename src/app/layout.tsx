@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 const DESCRIPTION =
-  "Meander — бесплатная программа для создания и прохождения текстовых квестов: визуальный редактор скриптов, ветвящиеся сюжеты, изображения и аудио. Приложение доступно на Android, iPhone и iPad (App Store), Windows, macOS и Linux. В маркете — сотни историй от авторов.";
+  "Meander — бесплатная программа с открытым исходным кодом (AGPL-3.0) для создания и прохождения текстовых квестов: визуальный редактор скриптов, ветвящиеся сюжеты, изображения и аудио. Без рекламы и платных подписок. Есть на Android, iPhone и iPad (App Store), Windows, macOS и Linux. В маркете — сотни историй от авторов.";
 
 export const metadata: Metadata = {
   // Домен задаёт один SITE_ORIGIN из src/lib/seo.ts: метаданные, canonical,
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s | Meander",
   },
   description: DESCRIPTION,
-  keywords: ["текстовые квесты", "создание игр", "визуальная новелла", "редактор скриптов", "interactive fiction", "Meander"],
+  keywords: ["текстовые квесты", "создание игр", "визуальная новелла", "редактор скриптов", "interactive fiction", "Meander", "открытый исходный код", "open source", "AGPL", "App Store", "iPhone", "iPad"],
   authors: [{ name: "IILLUMINAT" }],
   creator: "IILLUMINAT",
   openGraph: {

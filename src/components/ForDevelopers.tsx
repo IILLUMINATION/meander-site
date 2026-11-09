@@ -1,8 +1,9 @@
 "use client";
 
-import { Terminal, Copy, CheckCircle, ExternalLink, ArrowRight } from "lucide-react";
+import { Terminal, Copy, CheckCircle, ExternalLink, ArrowRight, GitBranch } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { SOURCE_REPO } from "@/lib/downloads";
 
 export default function ForDevelopers() {
   const [copied, setCopied] = useState(false);
@@ -106,6 +107,55 @@ export default function ForDevelopers() {
                 <ArrowRight size={18} />
               </Link>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="m3-container">
+        <div className="m3-card p-6 md:p-8">
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className="w-10 h-10 rounded-2xl flex items-center justify-center"
+              style={{ backgroundColor: "var(--m3-primary-container)" }}
+            >
+              <GitBranch
+                size={20}
+                style={{ color: "var(--m3-on-primary-container)" }}
+              />
+            </div>
+            <h3 className="m3-title-large" style={{ color: "var(--m3-on-surface)" }}>
+              Открытый исходный код — станьте контрибьютором
+            </h3>
+          </div>
+          <p
+            className="m3-body-medium mb-6 max-w-3xl"
+            style={{ color: "var(--m3-on-surface-variant)" }}
+          >
+            Meander полностью открыт: движок, редактор, маркет и сайт лежат под
+            лицензией AGPL-3.0-or-later. Проект живёт на вклад сообщества —
+            присылайте issues и pull requests. Пригодятся не только код и
+            баг-репорты: переводы, документация, темы оформления и свои квесты
+            тоже в дело.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <a
+              href={SOURCE_REPO}
+              target="_blank"
+              rel="noreferrer"
+              className="m3-btn m3-btn-filled"
+            >
+              <GitBranch size={16} />
+              Репозиторий на GitHub
+            </a>
+            <a
+              href={`${SOURCE_REPO}/blob/main/CONTRIBUTORS.md`}
+              target="_blank"
+              rel="noreferrer"
+              className="m3-btn m3-btn-outlined"
+            >
+              <ExternalLink size={16} />
+              Контрибьюторы
+            </a>
           </div>
         </div>
       </div>

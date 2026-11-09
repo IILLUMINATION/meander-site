@@ -32,12 +32,13 @@ import {
   CheckCircle,
   Clock,
   Copy,
+  Code,
 } from "lucide-react";
 import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
 import ForDevelopers from "@/components/ForDevelopers";
 import DemoPlayer from "@/components/DemoPlayer";
-import { DOWNLOAD_LINKS } from "@/lib/downloads";
+import { DOWNLOAD_LINKS, LICENSE_NAME, RELEASES_REPO, SOURCE_REPO } from "@/lib/downloads";
 
 const features = [
   {
@@ -69,6 +70,11 @@ const features = [
     icon: Package,
     title: "Открытый формат",
     description: "Экспорт/импорт в .mnd. Формат полностью открытый, можно править вручную.",
+  },
+  {
+    icon: Code,
+    title: "Открытый исходный код",
+    description: "Движок, редактор и маркет — под AGPL-3.0. Форкайте и присылайте pull requests.",
   },
 ];
 
@@ -308,6 +314,7 @@ export default function HomeClient({
             style={{ color: "var(--m3-on-surface-variant)" }}
           >
             Есть на Android, iPhone и iPad (App Store), Windows, macOS и Linux.
+            Бесплатно на всех платформах — без рекламы и платных подписок.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <a
@@ -513,11 +520,11 @@ export default function HomeClient({
           </div>
 
           <p
-            className="m3-body-medium mb-6"
+            className="m3-body-medium mb-4"
             style={{ color: "var(--m3-on-surface-variant)" }}
           >
-            Meander есть на Android, iPhone и iPad: приложение для iOS
-            бесплатно в{" "}
+            Meander бесплатна целиком и на всех платформах: без рекламы и
+            платных подписок, весь функционал открыт сразу. iOS и iPadOS — в{" "}
             <a
               href={DOWNLOAD_LINKS.ios.appStore}
               target="_blank"
@@ -526,8 +533,35 @@ export default function HomeClient({
             >
               App Store
             </a>
-            , для Android — в Google Play. Настольные сборки для Windows, macOS и
-            Linux — в архиве релизов на GitHub.
+            , Android — в Google Play, настольные сборки для Windows, macOS и
+            Linux — в{" "}
+            <a
+              href={`${RELEASES_REPO}/releases`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--m3-primary)" }}
+            >
+              архиве релизов
+            </a>
+            .
+          </p>
+
+          <p
+            className="m3-body-medium mb-6"
+            style={{ color: "var(--m3-on-surface-variant)" }}
+          >
+            Meander — проект с открытым исходным кодом под лицензией{" "}
+            {LICENSE_NAME}: движок, редактор, маркет и этот сайт лежат в{" "}
+            <a
+              href={SOURCE_REPO}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--m3-primary)" }}
+            >
+              репозитории на GitHub
+            </a>
+            . Хотите помочь — присылайте issues и pull requests: пригодятся
+            баг-репорты, переводы, квесты и код.
           </p>
 
           {currentPlatform === "android" && (
@@ -559,16 +593,24 @@ export default function HomeClient({
           )}
 
           <div
-            className="mt-10 md:mt-14 pt-6 md:pt-8"
+            className="mt-10 md:mt-14 pt-6 md:pt-8 flex flex-col sm:flex-row items-center justify-center gap-2"
             style={{ borderTop: "1px solid var(--m3-outline-variant)" }}
           >
             <a
-              href="https://github.com/IILLUMINATION/meanderPUBLIC/releases"
+              href={`${RELEASES_REPO}/releases`}
               target="_blank"
               rel="noopener noreferrer"
               className="m3-btn m3-btn-text"
             >
               Архив всех релизов на GitHub
+            </a>
+            <a
+              href={SOURCE_REPO}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="m3-btn m3-btn-text"
+            >
+              Исходный код на GitHub
             </a>
           </div>
         </div>
