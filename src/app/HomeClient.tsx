@@ -358,30 +358,20 @@ export default function HomeClient({
         <div className="flex justify-center items-center gap-4 md:gap-8 mt-10 md:mt-16">
           {[
             {
-              src: "/images/hero/phone-choice.webp",
-              alt: "Meander на телефоне: диалог квеста с выбором ответа",
+              src: "/images/hero/phone-welcome.webp",
+              alt: "Meander на телефоне: приветствие и галерея квестов",
             },
             {
-              src: "/images/hero/phone-story.webp",
-              alt: "Meander на телефоне: следующий узел квеста с иллюстрацией",
+              src: "/images/hero/phone-market.webp",
+              alt: "Meander на телефоне: маркет с выбором редакции",
             },
           ].map((shot) => (
-            <div
+            <img
               key={shot.src}
-              className="p-1.5 md:p-2"
-              style={{
-                background: "var(--m3-surface-container-low)",
-                border: "1px solid var(--m3-outline-variant)",
-                borderRadius: "1.5rem",
-              }}
-            >
-              <img
-                src={shot.src}
-                alt={shot.alt}
-                className="h-48 md:h-80 w-auto object-contain"
-                style={{ borderRadius: "1.1rem" }}
-              />
-            </div>
+              src={shot.src}
+              alt={shot.alt}
+              className="h-48 md:h-80 w-auto object-contain"
+            />
           ))}
         </div>
       </section>
