@@ -1,4 +1,5 @@
 import { ExternalLink, Play } from "lucide-react";
+import WebPlayerWarning from "@/components/WebPlayerWarning";
 
 interface DemoPlayerProps {
   questId: string;
@@ -57,6 +58,7 @@ export default function DemoPlayer({ questId, title, previewUrl }: DemoPlayerPro
             Открой квест в новой вкладке: движок Meander работает в браузере,
             архив остаётся на сервере. Ни установки, ни аккаунта.
           </p>
+          <WebPlayerWarning />
           <div className="flex flex-wrap gap-3">
             <a
               href={playerHref}

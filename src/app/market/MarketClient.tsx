@@ -9,7 +9,6 @@ import GoogleSignInButton from "@/components/GoogleSignInButton";
 import {
   Download,
   Heart,
-  HeartHandshake,
   Clock,
   User,
   LogOut,
@@ -25,7 +24,6 @@ import {
   X,
 } from "lucide-react";
 import HeroCarousel, { CarouselQuest } from "@/components/HeroCarousel";
-import PartnerCarousel from "@/components/PartnerCarousel";
 import QuestCover from "@/components/QuestCover";
 
 const API_URL = "/api/be";
@@ -345,10 +343,6 @@ export default function MarketClient({
             aria-hidden={searchQuery ? "true" : "false"}
           >
             <div className="m3-collapsible-inner">
-              <div className="mb-6 md:mb-8">
-                <PartnerCarousel />
-              </div>
-
               <div className="flex gap-2 overflow-x-auto pb-4 mb-6 md:mb-8 scrollbar-hide">
                 {categories.map((cat) => (
                   <button

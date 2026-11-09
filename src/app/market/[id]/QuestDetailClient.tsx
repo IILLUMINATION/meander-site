@@ -8,6 +8,7 @@ import axios from "axios";
 import { CredentialResponse } from "@react-oauth/google";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import QuestCover from "@/components/QuestCover";
+import WebPlayerWarning from "@/components/WebPlayerWarning";
 import { translateGenre } from "@/lib/genres";
 import type { Quest } from "@/lib/quest";
 import {
@@ -461,6 +462,8 @@ export default function QuestDetailClient({
                   <Flag className="w-5 h-5" />
                 </button>
               </div>
+
+              <WebPlayerWarning />
             </div>
           </div>
 

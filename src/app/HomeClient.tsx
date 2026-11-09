@@ -13,7 +13,6 @@ import {
   Globe,
   Package,
   Smartphone,
-  Laptop,
   Monitor,
   Terminal,
   MonitorPlay,
@@ -326,7 +325,6 @@ export default function HomeClient({
             style={{ color: "var(--m3-on-surface-variant)" }}
           >
             Бесплатная программа для создания и прохождения текстовых квестов.
-            Визуальный редактор, ветвящиеся сюжеты и маркет историй.
           </p>
           <p
             className="max-w-2xl mx-auto m3-body-medium"
