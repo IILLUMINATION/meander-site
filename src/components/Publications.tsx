@@ -69,8 +69,8 @@ const PUBLICATIONS = [
   },
   {
     icon: "/images/social/simplex.svg",
-    title: "Чат в SimpleX",
-    description: "Приватное общение без номера телефона и аккаунта",
+    title: "Канал в SimpleX",
+    description: "Канал в приватном мессенджере — без номера телефона и аккаунта",
     url: "https://smp8.simplex.im/c#CzSNY5nCRjC1CAI79TaFH7hW2PO1ndX24TIqBjxb9KY",
   },
 ];

@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import type { Quest } from "@/lib/quest";
+import type { RepoActivity as RepoActivityData } from "@/lib/github";
 import {
   LayoutGrid,
   GitBranch,
@@ -27,6 +28,7 @@ import {
 import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
 import ForDevelopers from "@/components/ForDevelopers";
+import RepoActivity from "@/components/RepoActivity";
 import DemoPlayer from "@/components/DemoPlayer";
 import DeviceShowcase from "@/components/DeviceShowcase";
 import ContestCard from "@/components/ContestCard";
@@ -101,7 +103,13 @@ export default function HomeClient({
   topQuests,
   demoQuest,
   contestActive = false,
-}: Readonly<{ topQuests: Quest[]; demoQuest?: Quest | null; contestActive?: boolean }>) {
+  repoActivity = null,
+}: Readonly<{
+  topQuests: Quest[];
+  demoQuest?: Quest | null;
+  contestActive?: boolean;
+  repoActivity?: RepoActivityData | null;
+}>) {
   const [currentPlatform, setCurrentPlatform] = useState("android");
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -347,17 +355,34 @@ export default function HomeClient({
           </div>
         </div>
 
-        <div className="flex justify-center gap-4 md:gap-8 mt-10 md:mt-16">
-          <img
-            src="/images/phone-mockup-1.png"
-            alt="Meander на Android"
-            className="h-48 md:h-80 w-auto object-contain"
-          />
-          <img
-            src="/images/phone-mockup-2.png"
-            alt="Meander интерфейс"
-            className="h-48 md:h-80 w-auto object-contain"
-          />
+        <div className="flex justify-center items-center gap-4 md:gap-8 mt-10 md:mt-16">
+          {[
+            {
+              src: "/images/hero/phone-choice.webp",
+              alt: "Meander на телефоне: диалог квеста с выбором ответа",
+            },
+            {
+              src: "/images/hero/phone-story.webp",
+              alt: "Meander на телефоне: следующий узел квеста с иллюстрацией",
+            },
+          ].map((shot) => (
+            <div
+              key={shot.src}
+              className="p-1.5 md:p-2"
+              style={{
+                background: "var(--m3-surface-container-low)",
+                border: "1px solid var(--m3-outline-variant)",
+                borderRadius: "1.5rem",
+              }}
+            >
+              <img
+                src={shot.src}
+                alt={shot.alt}
+                className="h-48 md:h-80 w-auto object-contain"
+                style={{ borderRadius: "1.1rem" }}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
@@ -693,6 +718,8 @@ export default function HomeClient({
       </section>
 
       <ForDevelopers />
+
+      {repoActivity && <RepoActivity activity={repoActivity} />}
 
       <Publications />
 

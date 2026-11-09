@@ -4,6 +4,7 @@ import type { Quest } from "@/lib/quest";
 import { SITE_ORIGIN, getTopQuests, jsonLd, questUrl } from "@/lib/seo";
 import { DOWNLOAD_LINKS, LICENSE_URL, SOURCE_REPO } from "@/lib/downloads";
 import { isContestActive } from "@/lib/contest";
+import { getRepoActivity } from "@/lib/github";
 
 // Как и маркет: топ по скачиваниям должен обновляться сам, без ручной
 // перевыкладки сайта.
@@ -88,6 +89,10 @@ export default async function HomePage() {
   // отрисуется карусель, а остальной текст страницы остаётся.
   const topQuests = await getTopQuests().catch(() => []);
 
+  // Активность репозитория — украшение, а не контент страницы: если GitHub
+  // молчит, виджет просто не рисуем, остальная главная остаётся целой.
+  const repoActivity = await getRepoActivity();
+
   const demoQuest =
     topQuests.find((q) => q.id === "722b40c5-0fab-4877-9a0b-20ea44eb7c67") ??
     topQuests[0] ??
@@ -99,6 +104,7 @@ export default async function HomePage() {
         topQuests={topQuests}
         demoQuest={demoQuest}
         contestActive={isContestActive()}
+        repoActivity={repoActivity}
       />
       <script
         type="application/ld+json"
