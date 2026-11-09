@@ -2939,6 +2939,55 @@ body {
   }
 }
 
+/* Лента медиа с реальных устройств: горизонтальный скролл со снапом.
+   Высота карточки фиксирована, ширину задаёт пропорция снимка, поэтому
+   вертикальные и горизонтальные кадры не режутся. */
+.m3-media-strip {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.75rem;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+}
+.m3-media-strip:focus-visible {
+  outline: 2px solid var(--m3-primary);
+  outline-offset: 4px;
+}
+.m3-media-item {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+.m3-media-frame {
+  display: flex;
+  height: 220px;
+  overflow: hidden;
+  background: var(--m3-surface-container-lowest);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--m3-radius-lg);
+}
+.m3-media-frame img,
+.m3-media-frame video {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+.m3-media-strip::-webkit-scrollbar {
+  height: 8px;
+}
+.m3-media-strip::-webkit-scrollbar-thumb {
+  background: var(--m3-outline-variant);
+  border-radius: 9999px;
+}
+@media (min-width: 768px) {
+  .m3-media-strip {
+    gap: 1rem;
+  }
+  .m3-media-frame {
+    height: 380px;
+  }
+}
+
 .m3-footer-main {
   position: relative;
   background: var(--m3-footer-bg, var(--m3-surface));

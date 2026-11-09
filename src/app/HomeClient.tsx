@@ -18,11 +18,6 @@ import {
   Terminal,
   MonitorPlay,
   Apple,
-  Send,
-  Youtube,
-  MessageSquare,
-  Shield,
-  Heart,
   Menu,
   X,
   Download,
@@ -38,6 +33,9 @@ import HeroCarousel from "@/components/HeroCarousel";
 import InfoCards from "@/components/InfoCards";
 import ForDevelopers from "@/components/ForDevelopers";
 import DemoPlayer from "@/components/DemoPlayer";
+import DeviceShowcase from "@/components/DeviceShowcase";
+import ContestCard from "@/components/ContestCard";
+import Publications from "@/components/Publications";
 import { DOWNLOAD_LINKS, LICENSE_NAME, RELEASES_REPO, SOURCE_REPO } from "@/lib/downloads";
 
 const features = [
@@ -102,14 +100,6 @@ const roadmapItems = [
     description: "Прохождение квестов прямо в чате, без установки приложения.",
     status: "planned",
   },
-];
-
-const socialLinks = [
-  { name: "Telegram канал", url: "https://t.me/meanderRU", icon: Send },
-  { name: "YouTube", url: "https://www.youtube.com/@meanderRU", icon: Youtube },
-  { name: "Форум в TG", url: "https://t.me/mndForum", icon: MessageSquare },
-  { name: "Simplex чат", url: "https://smp10.simplex.im/g#tFj94ScyihNimJ1Nga7AXylCi7ebUvi9fsa-oxlwr4s", icon: Shield },
-  { name: "Boosty", url: "https://boosty.to/iilluminat/posts/8e4bc65c-f106-4560-b158-973d6e8a65f6", icon: Heart },
 ];
 
 export default function HomeClient({
@@ -241,6 +231,8 @@ export default function HomeClient({
             <Link href="#download" className="m3-nav-item">Скачать</Link>
             <Link href="/market" className="m3-nav-item">Маркет</Link>
             <Link href="#gallery" className="m3-nav-item">Демо</Link>
+            <Link href="#events" className="m3-nav-item">Конкурс</Link>
+            <Link href="#publications" className="m3-nav-item">Сообщество</Link>
             <Link href="/branding" className="m3-nav-item">Брендинг</Link>
             <Link href="/docs" className="m3-nav-item">Документация</Link>
             <Link href="#roadmap" className="m3-nav-item">Roadmap</Link>
@@ -292,6 +284,12 @@ export default function HomeClient({
           <hr className="m3-drawer-divider" />
           <Link href="#gallery" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
             Демо
+          </Link>
+          <Link href="#events" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Конкурс
+          </Link>
+          <Link href="#publications" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+            Сообщество
           </Link>
           <Link href="/branding" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
             Брендинг
@@ -686,6 +684,10 @@ export default function HomeClient({
         </div>
       </section>
 
+      <DeviceShowcase />
+
+      <ContestCard />
+
       <InfoCards />
 
       <section
@@ -721,6 +723,8 @@ export default function HomeClient({
       </section>
 
       <ForDevelopers />
+
+      <Publications />
 
       <section
         id="roadmap"
