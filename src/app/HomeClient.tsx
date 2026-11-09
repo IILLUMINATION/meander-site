@@ -161,7 +161,7 @@ export default function HomeClient({
       return DOWNLOAD_LINKS.ios.appStore;
     }
     if (platform === "macos") {
-      return DOWNLOAD_LINKS.macos.github;
+      return DOWNLOAD_LINKS.macos.appStore;
     }
     if (platform === "linux") {
       return DOWNLOAD_LINKS.linux.github;
@@ -172,24 +172,33 @@ export default function HomeClient({
     return DOWNLOAD_LINKS.android.github;
   };
 
-  // Кнопка магазина приложений: Android и iOS ставятся только из стора,
-  // поэтому у них отдельная карточка с бейджем и QR для десктопа.
+  // Кнопка магазина приложений: Android, iOS и macOS ставятся из стора,
+  // поэтому у них отдельная карточка с бейджем. У macOS ссылка ровно та же,
+  // что у iOS: Apple Silicon запускает тот же билд, отдельного нет.
   const storeButton =
-    currentPlatform === "ios"
+    currentPlatform === "android"
       ? {
-          href: DOWNLOAD_LINKS.ios.appStore,
-          badge: "/app-store-ru.svg",
-          alt: "Загрузите в App Store",
-          aria: "Скачать в App Store",
-          note: "Для iPhone и iPad (iOS 15 или новее) — бесплатно в App Store",
-        }
-      : {
           href: DOWNLOAD_LINKS.android.googlePlay,
           badge: "/google-play-ru.svg",
           alt: "Доступно в Google Play",
           aria: "Скачать в Google Play",
           note: "Рекомендуемый способ установки",
-        };
+        }
+      : currentPlatform === "macos"
+        ? {
+            href: DOWNLOAD_LINKS.macos.appStore,
+            badge: "/app-store-ru.svg",
+            alt: "Загрузите в App Store",
+            aria: "Скачать в App Store",
+            note: "Тот же билд, что на iPhone: Mac с Apple Silicon (M1 и новее) ставит его из App Store",
+          }
+        : {
+            href: DOWNLOAD_LINKS.ios.appStore,
+            badge: "/app-store-ru.svg",
+            alt: "Загрузите в App Store",
+            aria: "Скачать в App Store",
+            note: "Для iPhone и iPad (iOS 15 или новее) — бесплатно в App Store",
+          };
 
   const getAlternativeLinks = (platform: string) => {
     if (platform === "android") {
@@ -198,7 +207,18 @@ export default function HomeClient({
         { name: "GitHub (APK)", url: links.github },
         { name: "APKPure", url: links.apkpure },
         { name: "TrashBox", url: links.trashbox },
-        { name: "RuStore", url: links.rustore, note: true },
+        { name: "RuStore", url: links.rustore, note: "старая" },
+      ];
+    }
+    if (platform === "macos") {
+      // Отдельной сборки под Intel Mac в App Store нет, а .zip в релизах
+      // отстаёт от стора: держим ссылку как запасной путь для старых машин.
+      return [
+        {
+          name: "GitHub (.zip для Intel Mac)",
+          url: DOWNLOAD_LINKS.macos.github,
+          note: "версия отстаёт",
+        },
       ];
     }
     return [];
@@ -313,8 +333,9 @@ export default function HomeClient({
             className="max-w-2xl mx-auto m3-body-medium"
             style={{ color: "var(--m3-on-surface-variant)" }}
           >
-            Есть на Android, iPhone и iPad (App Store), Windows, macOS и Linux.
-            Бесплатно на всех платформах — без рекламы и платных подписок.
+            Есть на Android, iPhone, iPad и Mac (в App Store), а также для
+            Windows и Linux. Бесплатно на всех платформах — без рекламы и
+            платных подписок.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <a
@@ -402,7 +423,9 @@ export default function HomeClient({
           </div>
 
           <div className="m3-download-card mb-8 md:mb-10">
-            {currentPlatform === "android" || currentPlatform === "ios" ? (
+            {currentPlatform === "android" ||
+            currentPlatform === "ios" ||
+            currentPlatform === "macos" ? (
               <div className="m3-download-android">
                 <div className="m3-download-android-main">
                   <a
@@ -419,13 +442,14 @@ export default function HomeClient({
                     />
                   </a>
                   <p
-                    className="m3-body-small mt-3"
+                    className="m3-body-small mt-3 md:max-w-md"
                     style={{ color: "var(--m3-on-surface-variant)" }}
                   >
                     {storeButton.note}
                   </p>
                 </div>
-                {isDesktop && (
+                {/* На macOS QR не нужен: тот же Mac и открывает Mac App Store. */}
+                {isDesktop && currentPlatform !== "macos" && (
                   <div className="m3-download-qr">
                     <div className="m3-download-qr-frame">
                       <QRCodeSVG
@@ -524,7 +548,8 @@ export default function HomeClient({
             style={{ color: "var(--m3-on-surface-variant)" }}
           >
             Meander бесплатна целиком и на всех платформах: без рекламы и
-            платных подписок, весь функционал открыт сразу. iOS и iPadOS — в{" "}
+            платных подписок, весь функционал открыт сразу. iPhone, iPad и Mac
+            (Apple Silicon) — в{" "}
             <a
               href={DOWNLOAD_LINKS.ios.appStore}
               target="_blank"
@@ -533,8 +558,8 @@ export default function HomeClient({
             >
               App Store
             </a>
-            , Android — в Google Play, настольные сборки для Windows, macOS и
-            Linux — в{" "}
+            , на Mac это тот же билд, что на iPhone. Android — в Google Play,
+            сборки для Windows и Linux, а также .zip для старых Intel-Mac — в{" "}
             <a
               href={`${RELEASES_REPO}/releases`}
               target="_blank"
@@ -564,7 +589,7 @@ export default function HomeClient({
             баг-репорты, переводы, квесты и код.
           </p>
 
-          {currentPlatform === "android" && (
+          {(currentPlatform === "android" || currentPlatform === "macos") && (
             <div className="m3-download-alt">
               <p
                 className="m3-label-large uppercase tracking-widest mb-4"
@@ -573,7 +598,7 @@ export default function HomeClient({
                 Альтернативные источники
               </p>
               <div className="flex flex-col items-stretch gap-2 md:flex-row md:flex-wrap md:justify-center md:gap-3">
-                {getAlternativeLinks("android").map((link, index) => (
+                {getAlternativeLinks(currentPlatform).map((link, index) => (
                   <a
                     key={index}
                     href={link.url}
@@ -583,7 +608,7 @@ export default function HomeClient({
                     {link.name}
                     {link.note && (
                       <span className="m3-body-small" style={{ color: "var(--m3-outline)" }}>
-                        (старая)
+                        ({link.note})
                       </span>
                     )}
                   </a>

@@ -14,6 +14,12 @@ export const LICENSE_URL = "https://www.gnu.org/licenses/agpl-3.0.html";
 const release = (version: string, asset: string) =>
   `${RELEASES_REPO}/releases/download/${encodeURIComponent(version)}/${asset}`;
 
+// iPhone, iPad и Mac с Apple Silicon ставятся из App Store по одной и той же
+// ссылке: отдельного macOS-билда Apple не собирает, Mac запускает тот же
+// iOS-билд. Отдельная страница в App Store для Mac — только вкладка в поиске
+// («Приложения для iPhone и iPad»).
+const APP_STORE = "https://apps.apple.com/app/id6813247027";
+
 export const DOWNLOAD_LINKS = {
   android: {
     googlePlay:
@@ -28,9 +34,12 @@ export const DOWNLOAD_LINKS = {
   ios: {
     // Установка на iPhone и iPad идёт только через App Store: .ipa из релизов
     // без Mac и AltStore обычному игроку не поставить.
-    appStore: "https://apps.apple.com/app/id6813247027",
+    appStore: APP_STORE,
   },
   macos: {
+    // Тот же адрес, что у iOS: на M-чипах ставится iOS-билд.
+    appStore: APP_STORE,
+    // .zip — запасной путь для Intel-Mac, где iOS-приложения не запускаются.
     github: release("2.8.14+259", "Release.Macos.zip"),
   },
   linux: {
