@@ -35,7 +35,7 @@ export default function DemoPlayer({ questId, title, previewUrl }: DemoPlayerPro
           aria-label={`Открыть демо «${title}» в новой вкладке`}
         >
           <img
-            src={previewUrl || "/images/screenshot-1.jpg"}
+            src={previewUrl || "/images/devices/clip-welcome.webp"}
             alt=""
             className="h-full w-full object-cover"
           />

@@ -1,7 +1,9 @@
 import { ExternalLink, Trophy } from "lucide-react";
 
-// Текущее событие. Когда конкурс кончится — убрать секцию целиком или
-// подменить на следующее событие; ссылка на пост и правила живут в Telegram.
+// Карточка текущего события: чистая разметка без логики. Решает, показывать
+// ли её, HomeClient по флагу contestActive из page.tsx — дата окончания
+// конкурса (31 декабря 2026) лежит в lib/contest. Новое событие — меняем дату
+// там или подменяем содержимое этой карточки.
 const CONTEST_POST = "https://t.me/meanderRU/2118";
 const CONTEST_RULES = "https://teletype.in/@meanderru/ZP9GHH861hR";
 

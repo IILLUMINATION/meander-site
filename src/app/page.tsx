@@ -3,6 +3,7 @@ import HomeClient from "./HomeClient";
 import type { Quest } from "@/lib/quest";
 import { SITE_ORIGIN, getTopQuests, jsonLd, questUrl } from "@/lib/seo";
 import { DOWNLOAD_LINKS, LICENSE_URL, SOURCE_REPO } from "@/lib/downloads";
+import { isContestActive } from "@/lib/contest";
 
 // Как и маркет: топ по скачиваниям должен обновляться сам, без ручной
 // перевыкладки сайта.
@@ -94,7 +95,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomeClient topQuests={topQuests} demoQuest={demoQuest} />
+      <HomeClient
+        topQuests={topQuests}
+        demoQuest={demoQuest}
+        contestActive={isContestActive()}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={jsonLd(homeSchema(topQuests))}

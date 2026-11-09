@@ -21,11 +21,7 @@ import {
   Menu,
   X,
   Download,
-  User,
-  Star,
   ChevronRight,
-  CheckCircle,
-  Clock,
   Copy,
   Code,
 } from "lucide-react";
@@ -105,7 +101,8 @@ const roadmapItems = [
 export default function HomeClient({
   topQuests,
   demoQuest,
-}: Readonly<{ topQuests: Quest[]; demoQuest?: Quest | null }>) {
+  contestActive = false,
+}: Readonly<{ topQuests: Quest[]; demoQuest?: Quest | null; contestActive?: boolean }>) {
   const [currentPlatform, setCurrentPlatform] = useState("android");
   const [detectedPlatform, setDetectedPlatform] = useState<string | null>(null);
   const [isDesktop, setIsDesktop] = useState(false);
@@ -231,7 +228,9 @@ export default function HomeClient({
             <Link href="#download" className="m3-nav-item">Скачать</Link>
             <Link href="/market" className="m3-nav-item">Маркет</Link>
             <Link href="#gallery" className="m3-nav-item">Демо</Link>
-            <Link href="#events" className="m3-nav-item">Конкурс</Link>
+            {contestActive && (
+              <Link href="#events" className="m3-nav-item">Конкурс</Link>
+            )}
             <Link href="#publications" className="m3-nav-item">Сообщество</Link>
             <Link href="/branding" className="m3-nav-item">Брендинг</Link>
             <Link href="/docs" className="m3-nav-item">Документация</Link>
@@ -285,9 +284,11 @@ export default function HomeClient({
           <Link href="#gallery" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
             Демо
           </Link>
-          <Link href="#events" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
-            Конкурс
-          </Link>
+          {contestActive && (
+            <Link href="#events" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
+              Конкурс
+            </Link>
+          )}
           <Link href="#publications" onClick={() => setMobileMenuOpen(false)} className="m3-drawer-item">
             Сообщество
           </Link>
@@ -650,43 +651,14 @@ export default function HomeClient({
           <DemoPlayer
             questId={demoQuest?.id ?? "722b40c5-0fab-4877-9a0b-20ea44eb7c67"}
             title={demoQuest?.title ?? "Добро пожаловать в Meander"}
-            previewUrl={demoQuest?.preview_image_url ?? "/images/screenshot-1.jpg"}
+            previewUrl={demoQuest?.preview_image_url ?? "/images/devices/clip-welcome.webp"}
           />
-          <div className="flex items-center justify-between mt-14 mb-5 md:mt-20 md:mb-7">
-            <h3 className="m3-title-large" style={{ color: "var(--m3-on-surface)" }}>
-              Как это выглядит
-            </h3>
-            <Link href="/market" className="m3-btn m3-btn-text">
-              Ещё квесты на маркете <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {[
-              { src: "/images/screenshot-1.jpg", alt: "Скриншот программы из Google Play" },
-              { src: "/images/screenshot-2.jpg", alt: "Скриншот интерфейса" },
-              { src: "/images/screenshot-3.jpg", alt: "Скриншот редактора" },
-              { src: "/images/screenshot-4.jpg", alt: "Скриншот программы" },
-              { src: "/images/screenshot-news.png", alt: "Новость о выходе новой версии" },
-              { src: "/images/screenshot-simplex.png", alt: "Чат в Simplex" },
-            ].map((shot, i) => (
-              <div
-                key={i}
-                className="aspect-video overflow-hidden"
-                style={{
-                  background: "var(--m3-surface-container-lowest)",
-                  borderRadius: "var(--m3-radius-lg)",
-                }}
-              >
-                <img src={shot.src} alt={shot.alt} className="w-full h-full object-cover" />
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
       <DeviceShowcase />
 
-      <ContestCard />
+      {contestActive && <ContestCard />}
 
       <InfoCards />
 
