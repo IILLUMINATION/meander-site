@@ -20,6 +20,8 @@ export const metadata: Metadata = {
  *
  * downloadUrl — Google Play, а не ссылка на релиз: ссылки на релизы привязаны
  * к версии (2.8.14%2B259) и протухают с каждым билдом, а их в клиенте пять.
+ * installUrl — App Store: iOS ставится только оттуда, и без него поиск
+ * считал приложение недоступным на iPhone.
  */
 function homeSchema(quests: Quest[]): unknown {
   return {
@@ -47,6 +49,11 @@ function homeSchema(quests: Quest[]): unknown {
         operatingSystem: "Windows, macOS, Linux, Android, iOS",
         url: `${SITE_ORIGIN}/`,
         downloadUrl: "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
+        installUrl: "https://apps.apple.com/app/id6813247027",
+        sameAs: [
+          "https://apps.apple.com/app/id6813247027",
+          "https://play.google.com/store/apps/details?id=com.IILLUMINAT.meadner",
+        ],
         offers: { "@type": "Offer", price: "0", priceCurrency: "RUB" },
       },
       ...(quests.length

@@ -152,7 +152,7 @@ export default function HomeClient({
       return DOWNLOAD_LINKS.android.googlePlay;
     }
     if (platform === "ios") {
-      return DOWNLOAD_LINKS.ios.github;
+      return DOWNLOAD_LINKS.ios.appStore;
     }
     if (platform === "macos") {
       return DOWNLOAD_LINKS.macos.github;
@@ -165,6 +165,25 @@ export default function HomeClient({
     }
     return DOWNLOAD_LINKS.android.github;
   };
+
+  // Кнопка магазина приложений: Android и iOS ставятся только из стора,
+  // поэтому у них отдельная карточка с бейджем и QR для десктопа.
+  const storeButton =
+    currentPlatform === "ios"
+      ? {
+          href: DOWNLOAD_LINKS.ios.appStore,
+          badge: "/app-store-ru.svg",
+          alt: "Загрузите в App Store",
+          aria: "Скачать в App Store",
+          note: "Для iPhone и iPad (iOS 15 или новее) — бесплатно в App Store",
+        }
+      : {
+          href: DOWNLOAD_LINKS.android.googlePlay,
+          badge: "/google-play-ru.svg",
+          alt: "Доступно в Google Play",
+          aria: "Скачать в Google Play",
+          note: "Рекомендуемый способ установки",
+        };
 
   const getAlternativeLinks = (platform: string) => {
     if (platform === "android") {
@@ -284,6 +303,12 @@ export default function HomeClient({
             Бесплатная программа для создания и прохождения текстовых квестов.
             Визуальный редактор, ветвящиеся сюжеты и маркет историй.
           </p>
+          <p
+            className="max-w-2xl mx-auto m3-body-medium"
+            style={{ color: "var(--m3-on-surface-variant)" }}
+          >
+            Есть на Android, iPhone и iPad (App Store), Windows, macOS и Linux.
+          </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center pt-6">
             <a
               href={getDownloadLink(currentPlatform)}
@@ -370,19 +395,19 @@ export default function HomeClient({
           </div>
 
           <div className="m3-download-card mb-8 md:mb-10">
-            {currentPlatform === "android" ? (
+            {currentPlatform === "android" || currentPlatform === "ios" ? (
               <div className="m3-download-android">
                 <div className="m3-download-android-main">
                   <a
-                    href={DOWNLOAD_LINKS.android.googlePlay}
+                    href={storeButton.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label="Скачать в Google Play"
+                    aria-label={storeButton.aria}
                     style={{ display: "inline-block", lineHeight: 0 }}
                   >
                     <img
-                      src="/google-play-ru.svg"
-                      alt="Доступно в Google Play"
+                      src={storeButton.badge}
+                      alt={storeButton.alt}
                       style={{ height: 56, width: "auto", display: "block" }}
                     />
                   </a>
@@ -390,14 +415,14 @@ export default function HomeClient({
                     className="m3-body-small mt-3"
                     style={{ color: "var(--m3-on-surface-variant)" }}
                   >
-                    Рекомендуемый способ установки
+                    {storeButton.note}
                   </p>
                 </div>
                 {isDesktop && (
                   <div className="m3-download-qr">
                     <div className="m3-download-qr-frame">
                       <QRCodeSVG
-                        value={DOWNLOAD_LINKS.android.googlePlay}
+                        value={storeButton.href}
                         size={160}
                         level="H"
                         includeMargin={false}
@@ -486,6 +511,24 @@ export default function HomeClient({
               </div>
             )}
           </div>
+
+          <p
+            className="m3-body-medium mb-6"
+            style={{ color: "var(--m3-on-surface-variant)" }}
+          >
+            Meander есть на Android, iPhone и iPad: приложение для iOS
+            бесплатно в{" "}
+            <a
+              href={DOWNLOAD_LINKS.ios.appStore}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: "var(--m3-primary)" }}
+            >
+              App Store
+            </a>
+            , для Android — в Google Play. Настольные сборки для Windows, macOS и
+            Linux — в архиве релизов на GitHub.
+          </p>
 
           {currentPlatform === "android" && (
             <div className="m3-download-alt">

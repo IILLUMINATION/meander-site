@@ -84,6 +84,14 @@ export default function Footer({ bgColor }: FooterProps = {}) {
                 <span>Google Play</span>
               </a>
               <a
+                href={DOWNLOAD_LINKS.ios.appStore}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="m3-footer-social-item"
+              >
+                <span>App Store</span>
+              </a>
+              <a
                 href={DOWNLOAD_LINKS.android.github}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -104,15 +112,26 @@ export default function Footer({ bgColor }: FooterProps = {}) {
         </div>
 
         <div className="m3-footer-bottom">
-          <a
-            href={DOWNLOAD_LINKS.android.googlePlay}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="m3-footer-bottom-gplay"
-            aria-label="Скачать в Google Play"
-          >
-            <img src="/google-play-ru.svg" alt="Доступно в Google Play" />
-          </a>
+          <div className="m3-footer-bottom-badges">
+            <a
+              href={DOWNLOAD_LINKS.android.googlePlay}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="m3-footer-bottom-gplay"
+              aria-label="Скачать в Google Play"
+            >
+              <img src="/google-play-ru.svg" alt="Доступно в Google Play" />
+            </a>
+            <a
+              href={DOWNLOAD_LINKS.ios.appStore}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="m3-footer-bottom-gplay m3-footer-bottom-appstore"
+              aria-label="Скачать в App Store"
+            >
+              <img src="/app-store-ru.svg" alt="Загрузите в App Store" />
+            </a>
+          </div>
           <div className="m3-footer-bottom-links">
             <span
               className="m3-footer-bottom-link"

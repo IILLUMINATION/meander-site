@@ -17,7 +17,9 @@ export const DOWNLOAD_LINKS = {
     rustore: "https://www.rustore.ru/catalog/app/com.IILLUMINAT.meadner",
   },
   ios: {
-    github: release("2.7.7+208", "Release.iOs.ipa"),
+    // Установка на iPhone и iPad идёт только через App Store: .ipa из релизов
+    // без Mac и AltStore обычному игроку не поставить.
+    appStore: "https://apps.apple.com/app/id6813247027",
   },
   macos: {
     github: release("2.8.14+259", "Release.Macos.zip"),

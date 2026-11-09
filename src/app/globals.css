@@ -3168,6 +3168,13 @@ a.m3-footer-brand-logo {
     text-align: left;
   }
 }
+.m3-footer-bottom-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
 .m3-footer-bottom-gplay {
   display: inline-flex;
   line-height: 0;
@@ -3180,6 +3187,16 @@ a.m3-footer-brand-logo {
 @media (min-width: 768px) {
   .m3-footer-bottom-gplay img {
     height: 36px;
+  }
+}
+/* Бейдж App Store в исходнике 119×40 и уже гуглового при той же высоте,
+   поэтому на пару пикселей выше — визуально пара выравнивается. */
+.m3-footer-bottom-appstore img {
+  height: 34px;
+}
+@media (min-width: 768px) {
+  .m3-footer-bottom-appstore img {
+    height: 38px;
   }
 }
 .m3-footer-bottom-links {
